@@ -82,7 +82,7 @@ const readyStub = {
 
 test("normalizeSettings applies V1 rules", () => {
   const s = normalizeSettings({ recordingHotkey: " ", language: "", autoSubmit: 1 });
-  assert.equal(s.recordingHotkey, DEFAULT_SETTINGS.recordingHotkey);
+  assert.equal(s.recordingHotkey, "ctrl+space");
   assert.equal(s.language, "auto");
   assert.equal(s.autoSubmit, true);
   // V1 parity: getModel() falls back to default at use sites, so unknown ids
@@ -94,6 +94,17 @@ test("mergeLegacyHotkey prefers explicit hold key", () => {
   assert.equal(mergeLegacyHotkey({}, { hotkey: "alt+r", toggleHotkey: "ctrl+r" }).recordingHotkey, "alt+r");
   assert.equal(mergeLegacyHotkey({}, { toggleHotkey: "ctrl+space" }).recordingHotkey, "ctrl+space");
   assert.equal(mergeLegacyHotkey({ recordingHotkey: "ctrl+r" }, { hotkey: "alt+r" }).recordingHotkey, "ctrl+r");
+  assert.equal(mergeLegacyHotkey({}, {}).recordingHotkey, "ctrl+space");
+});
+
+test("migrateHotkeyV2 moves old default once", async () => {
+  const { migrateHotkeyV2 } = await import("../src/settings.ts");
+  assert.deepEqual(migrateHotkeyV2(normalizeSettings({ recordingHotkey: "ctrl+r" })), {
+    recordingHotkey: "ctrl+space",
+    hotkeyMigratedV2: true,
+  });
+  assert.deepEqual(migrateHotkeyV2(normalizeSettings({ recordingHotkey: "alt+r" })), { hotkeyMigratedV2: true });
+  assert.equal(migrateHotkeyV2(normalizeSettings({ recordingHotkey: "ctrl+r", hotkeyMigratedV2: true })), undefined);
 });
 
 test("formatters stay stable", () => {
@@ -175,12 +186,14 @@ test("setup registers V2 keymap commands and runs record", async () => {
   };
   const cleanup = await tui.setup(ctx);
   assert.equal(typeof cleanup, "function");
+  assert.equal(store.state.recordingHotkey, "ctrl+space");
+  assert.equal(store.state.hotkeyMigratedV2, true);
   const layer = layerFn();
   assert.equal(layer.mode, "global");
   const ids = layer.commands.map((c) => c.id);
   assert.deepEqual(ids, ["voice.record", "voice.submit", "voice.stop", "voice.settings"]);
   const record = layer.commands[0];
-  assert.equal(record.bind, "ctrl+r");
+  assert.equal(record.bind, "ctrl+space");
   assert.deepEqual(record.slash, { name: "voice", aliases: ["voice-record"] });
   await record.run();
   assert.equal(runtime.recording, true);
