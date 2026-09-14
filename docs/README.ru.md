@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/ihxnnxs/opencode-voice">
+  <a href="https://github.com/safwan-o/opencode-voice">
     <picture>
       <source srcset="../assets/opencode-voice-dark.svg" media="(prefers-color-scheme: dark)">
       <source srcset="../assets/opencode-voice-light.svg" media="(prefers-color-scheme: light)">
@@ -29,7 +29,7 @@
 Одна команда через OpenCode:
 
 ```bash
-opencode plugin @hxnnxs/opencode-voice
+opencode plugin @safwan-o/opencode-voice
 ```
 
 Перезапустите OpenCode после установки. При первом запуске плагин сам скачает managed `whisper.cpp` engine и выбранную модель. Пользователь не ставит `whisper-cli` руками.
@@ -37,7 +37,7 @@ opencode plugin @hxnnxs/opencode-voice
 Опциональный CLI-установщик. Он запускает ту же установку через OpenCode и заранее скачивает managed engine:
 
 ```bash
-npx @hxnnxs/opencode-voice install
+npx @safwan-o/opencode-voice install
 ```
 
 Не клонируйте репозиторий, если не собираетесь разрабатывать плагин.
@@ -58,13 +58,13 @@ npx @hxnnxs/opencode-voice install
 Проверить машину:
 
 ```bash
-npx @hxnnxs/opencode-voice doctor
+npx @safwan-o/opencode-voice doctor
 ```
 
 Установить managed engine без открытия OpenCode:
 
 ```bash
-npx @hxnnxs/opencode-voice engine install whisper.cpp
+npx @safwan-o/opencode-voice engine install whisper.cpp
 ```
 
 ### Использование
@@ -118,7 +118,7 @@ Hold-to-talk отключен по умолчанию, потому что termi
 
 - npm package экспортирует `./tui`
 - локальная разработка может указать абсолютный путь в `tui.json`
-- published install использует `opencode plugin @hxnnxs/opencode-voice`
+- published install использует `opencode plugin @safwan-o/opencode-voice`
 - runtime settings хранятся в OpenCode TUI plugin storage
 
 Файлы:
@@ -154,7 +154,7 @@ npm pack --dry-run
 Установка из checkout для разработки:
 
 ```bash
-git clone https://github.com/ihxnnxs/opencode-voice.git opencode-voice
+git clone https://github.com/safwan-o/opencode-voice.git opencode-voice
 cd opencode-voice
 opencode plugin "$(pwd)"
 ```

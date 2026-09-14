@@ -1,18 +1,18 @@
 {
-  "name": "@hxnnxs/opencode-voice",
-  "version": "0.2.3",
-  "description": "Local voice input plugin for OpenCode",
+  "name": "@safwan-o/opencode-voice",
+  "version": "0.3.0",
+  "description": "Local voice input plugin for OpenCode (V2 TUI port)",
   "type": "module",
   "license": "MIT",
   "readmeFilename": "README.md",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ihxnnxs/opencode-voice.git"
+    "url": "git+https://github.com/safwan-o/opencode-voice.git"
   },
   "bugs": {
-    "url": "https://github.com/ihxnnxs/opencode-voice/issues"
+    "url": "https://github.com/safwan-o/opencode-voice/issues"
   },
-  "homepage": "https://github.com/ihxnnxs/opencode-voice#readme",
+  "homepage": "https://github.com/safwan-o/opencode-voice#readme",
   "main": "./index.js",
   "exports": {
     ".": {

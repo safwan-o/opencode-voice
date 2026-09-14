@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/ihxnnxs/opencode-voice">
+  <a href="https://github.com/safwan-o/opencode-voice">
     <picture>
       <source srcset="../assets/opencode-voice-dark.svg" media="(prefers-color-scheme: dark)">
       <source srcset="../assets/opencode-voice-light.svg" media="(prefers-color-scheme: light)">
@@ -29,7 +29,7 @@
 通过 OpenCode 一条命令安装：
 
 ```bash
-opencode plugin @hxnnxs/opencode-voice
+opencode plugin @safwan-o/opencode-voice
 ```
 
 安装后重启 OpenCode。首次启动会自动下载 managed `whisper.cpp` engine 和你选择的模型。用户不需要手动安装 `whisper-cli`。
@@ -37,7 +37,7 @@ opencode plugin @hxnnxs/opencode-voice
 可选 CLI 安装器。它会运行相同的 OpenCode plugin install 命令，并预下载 managed engine：
 
 ```bash
-npx @hxnnxs/opencode-voice install
+npx @safwan-o/opencode-voice install
 ```
 
 除非你要开发插件，否则不需要 clone 仓库。
@@ -58,13 +58,13 @@ npx @hxnnxs/opencode-voice install
 检查本机环境：
 
 ```bash
-npx @hxnnxs/opencode-voice doctor
+npx @safwan-o/opencode-voice doctor
 ```
 
 不打开 OpenCode 也可以安装 managed engine：
 
 ```bash
-npx @hxnnxs/opencode-voice engine install whisper.cpp
+npx @safwan-o/opencode-voice engine install whisper.cpp
 ```
 
 ### 使用
@@ -118,7 +118,7 @@ ctrl+r -> 停止、转写并插入文本
 
 - npm package 导出 `./tui`
 - 本地开发可以在 `tui.json` 中使用绝对路径
-- 发布后使用 `opencode plugin @hxnnxs/opencode-voice` 安装
+- 发布后使用 `opencode plugin @safwan-o/opencode-voice` 安装
 - runtime settings 存储在 OpenCode TUI plugin storage 中
 
 文件：
@@ -154,7 +154,7 @@ npm pack --dry-run
 从 checkout 安装开发版本：
 
 ```bash
-git clone https://github.com/ihxnnxs/opencode-voice.git opencode-voice
+git clone https://github.com/safwan-o/opencode-voice.git opencode-voice
 cd opencode-voice
 opencode plugin "$(pwd)"
 ```

@@ -2,20 +2,20 @@
 
 ## npm name
 
-The package publishes as `@hxnnxs/opencode-voice`.
+The package publishes as `@safwan-o/opencode-voice`.
 
 The unscoped npm name `opencode-voice` is already published by another author, so do not publish this project under the unscoped name.
 
 Before publishing:
 
-1. Confirm `package.json#name` is `@hxnnxs/opencode-voice`.
+1. Confirm `package.json#name` is `@safwan-o/opencode-voice`.
 2. Keep the OpenCode plugin id as `opencode-voice` unless you want users to see a different plugin id.
-3. Confirm published install examples in all `README*.md` files use `@hxnnxs/opencode-voice`.
-4. Create the GitHub repository `ihxnnxs/opencode-voice` and push `main`.
+3. Confirm published install examples in all `README*.md` files use `@safwan-o/opencode-voice`.
+4. Create the GitHub repository `safwan-o/opencode-voice` and push `main`.
 5. Run the **Engine Release** GitHub Actions workflow first. It builds both `whisper-cli` and the Rust `opencode-voice-transcribe` sidecar for every platform, then publishes:
 
 ```txt
-https://github.com/ihxnnxs/opencode-voice/releases/download/v0.1.0/registry.json
+https://github.com/safwan-o/opencode-voice/releases/download/v0.1.0/registry.json
 ```
 
 6. Confirm the registry contains assets for the target release platforms.
