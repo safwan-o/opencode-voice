@@ -19,7 +19,7 @@
       "import": "./index.js"
     },
     "./tui": {
-      "import": "./index.js"
+      "import": "./src/tui.ts"
     },
     "./runtime": {
       "import": "./lib/engine.js"
@@ -32,6 +32,7 @@
     "assets/",
     "bin/",
     "lib/",
+    "src/",
     "index.js",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
@@ -48,7 +49,11 @@
     "prepack": "npm run check"
   },
   "dependencies": {
-    "ffmpeg-static": "^5.2.0"
+    "@opencode/plugin": "2.0.3",
+    "@opentui/core": "^0.5.11",
+    "@opentui/solid": "^0.5.11",
+    "ffmpeg-static": "^5.2.0",
+    "solid-js": "^1.9.15"
   },
   "publishConfig": {
     "access": "public",
