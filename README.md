@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/ihxnnxs/opencode-voice">
+  <a href="https://github.com/safwan-o/opencode-voice">
     <picture>
       <source srcset="assets/opencode-voice-dark.svg" media="(prefers-color-scheme: dark)">
       <source srcset="assets/opencode-voice-light.svg" media="(prefers-color-scheme: light)">
@@ -10,8 +10,8 @@
 <p align="center">Local speech-to-text for the OpenCode TUI.</p>
 <p align="center">
   <img alt="status" src="https://img.shields.io/badge/status-mvp-orange?style=flat-square" />
-  <a href="https://www.npmjs.com/package/@hxnnxs/opencode-voice"><img alt="npm version" src="https://img.shields.io/npm/v/@hxnnxs/opencode-voice?style=flat-square" /></a>
-  <a href="https://www.npmjs.com/package/@hxnnxs/opencode-voice"><img alt="npm downloads" src="https://img.shields.io/npm/dm/@hxnnxs/opencode-voice?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@safwan-o/opencode-voice"><img alt="npm version" src="https://img.shields.io/npm/v/@safwan-o/opencode-voice?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@safwan-o/opencode-voice"><img alt="npm downloads" src="https://img.shields.io/npm/dm/@safwan-o/opencode-voice?style=flat-square" /></a>
   <img alt="license" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" />
   <img alt="opencode" src="https://img.shields.io/badge/opencode-%3E%3D1.17.4-black?style=flat-square" />
   <img alt="stt" src="https://img.shields.io/badge/STT-local_whisper.cpp-purple?style=flat-square" />
@@ -31,21 +31,27 @@
 One command through OpenCode:
 
 ```bash
-opencode plugin @hxnnxs/opencode-voice
+opencode plugin @safwan-o/opencode-voice
 ```
 
-Restart OpenCode after installing. On first launch, choose a model. The plugin downloads its required local runtime and model weights automatically. Audio and transcription stay on your machine.
+Restart OpenCode after installing. For OpenCode 2.x the plugin loads from `cli.json`:
+
+```json
+{
+  "plugins": ["@safwan-o/opencode-voice"]
+}
+``` On first launch, choose a model. The plugin downloads its required local runtime and model weights automatically. Audio and transcription stay on your machine.
 
 Optional CLI installer. It runs the same OpenCode plugin install command and pre-downloads the managed engine:
 
 ```bash
-npx @hxnnxs/opencode-voice install
+npx @safwan-o/opencode-voice install
 ```
 
 Update an installed plugin to the latest published version, then restart OpenCode:
 
 ```bash
-npx @hxnnxs/opencode-voice update
+npx @safwan-o/opencode-voice update
 ```
 
 Add `--global` if the plugin was installed in OpenCode's global configuration.
@@ -53,7 +59,7 @@ Add `--global` if the plugin was installed in OpenCode's global configuration.
 Do not clone the repo unless you want to develop the plugin.
 
 > [!TIP]
-> First launch opens a model picker. Choose a local model, let it download, then use `ctrl+r` to dictate into the prompt.
+> First launch opens a model picker. Choose a local model, let it download, then use `ctrl+space` to dictate into the prompt (change it in `/voice-settings`).
 
 ## What It Installs
 
@@ -68,14 +74,14 @@ Manual runtime installation is optional. Existing `whisper-cli` or `opencode-voi
 Check your machine:
 
 ```bash
-npx @hxnnxs/opencode-voice doctor
+npx @safwan-o/opencode-voice doctor
 ```
 
 Install or inspect a managed runtime without opening OpenCode:
 
 ```bash
-npx @hxnnxs/opencode-voice engine install transcribe-cpp
-npx @hxnnxs/opencode-voice engine status transcribe-cpp
+npx @safwan-o/opencode-voice engine install transcribe-cpp
+npx @safwan-o/opencode-voice engine status transcribe-cpp
 ```
 
 ## Use It
@@ -135,7 +141,7 @@ Model downloads support resume, retry, progress, and SHA256 verification. Sideca
 Run diagnostics first:
 
 ```bash
-npx @hxnnxs/opencode-voice doctor
+npx @safwan-o/opencode-voice doctor
 ```
 
 - `Engine not found in registry: transcribe-cpp`: the installed plugin expects a release registry that does not yet include the sidecar. Update the plugin after its matching Engine Release is published, or locally import a built sidecar with `opencode-voice engine import transcribe-cpp <path>`.
@@ -156,7 +162,7 @@ The package follows the public OpenCode TUI plugin shape used by community plugi
 
 - npm package exports `./tui`
 - local development can point `tui.json` at an absolute path
-- published install uses `opencode plugin @hxnnxs/opencode-voice`
+- published install uses `opencode plugin @safwan-o/opencode-voice`
 - runtime settings live in OpenCode TUI plugin storage
 
 Files:
@@ -193,7 +199,7 @@ The JavaScript plugin has no frontend build step. The optional GGUF runtime is a
 Use the current checkout in OpenCode:
 
 ```bash
-git clone https://github.com/ihxnnxs/opencode-voice.git opencode-voice
+git clone https://github.com/safwan-o/opencode-voice.git opencode-voice
 cd opencode-voice
 opencode plugin "$(pwd)"
 ```

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 - 2026-09-15
+
+### Added
+
+- V2 TUI port (`src/`, `Plugin.define({id, setup})`, `./tui` entry) for OpenCode 2.x.
+  Verified live: no `Invalid V2 TUI plugin module`, palette commands + startup picker render.
+- Record key default is now `ctrl+space` (one-time migrate off `ctrl+r`, reversible in `/voice-settings`).
+
+### Changed
+
+- Package scope is now `@safwan-o/opencode-voice` (fork of `@hxnnxs/opencode-voice`).
+- Transcription delivery on V2 submits via `session.prompt` (CLI API has no composer-append).
+
 ## 0.2.3 - 2026-08-17
 
 ### Fixed

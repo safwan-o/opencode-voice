@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/ihxnnxs/opencode-voice">
+  <a href="https://github.com/safwan-o/opencode-voice">
     <picture>
       <source srcset="../assets/opencode-voice-dark.svg" media="(prefers-color-scheme: dark)">
       <source srcset="../assets/opencode-voice-light.svg" media="(prefers-color-scheme: light)">
@@ -29,7 +29,7 @@
 Una sola orden mediante OpenCode:
 
 ```bash
-opencode plugin @hxnnxs/opencode-voice
+opencode plugin @safwan-o/opencode-voice
 ```
 
 Reinicia OpenCode después de instalar. En el primer inicio, el plugin descarga el managed `whisper.cpp` engine y el modelo elegido. El usuario no instala `whisper-cli` manualmente.
@@ -37,7 +37,7 @@ Reinicia OpenCode después de instalar. En el primer inicio, el plugin descarga 
 Instalador CLI opcional. Ejecuta el mismo comando de instalación de OpenCode y predescarga el managed engine:
 
 ```bash
-npx @hxnnxs/opencode-voice install
+npx @safwan-o/opencode-voice install
 ```
 
 No clones el repositorio salvo que quieras desarrollar el plugin.
@@ -58,13 +58,13 @@ Instalar `whisper-cli` manualmente es opcional. Si ya existe un binary local, `o
 Comprueba tu máquina:
 
 ```bash
-npx @hxnnxs/opencode-voice doctor
+npx @safwan-o/opencode-voice doctor
 ```
 
 Instala el managed engine sin abrir OpenCode:
 
 ```bash
-npx @hxnnxs/opencode-voice engine install whisper.cpp
+npx @safwan-o/opencode-voice engine install whisper.cpp
 ```
 
 ### Uso
@@ -118,7 +118,7 @@ El paquete sigue la forma pública de plugin TUI que usan los plugins de la comu
 
 - npm package exporta `./tui`
 - el desarrollo local puede apuntar `tui.json` a una ruta absoluta
-- la instalación publicada usa `opencode plugin @hxnnxs/opencode-voice`
+- la instalación publicada usa `opencode plugin @safwan-o/opencode-voice`
 - runtime settings viven en OpenCode TUI plugin storage
 
 Archivos:
@@ -154,7 +154,7 @@ Este MVP no tiene build step.
 Instalación de desarrollo desde un checkout:
 
 ```bash
-git clone https://github.com/ihxnnxs/opencode-voice.git opencode-voice
+git clone https://github.com/safwan-o/opencode-voice.git opencode-voice
 cd opencode-voice
 opencode plugin "$(pwd)"
 ```
