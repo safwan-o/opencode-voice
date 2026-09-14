@@ -10,7 +10,13 @@ export interface VoiceSettings {
   downloadDir: string;
   onboardingDone: boolean;
   setupSkipped: boolean;
+  /** One-time V2 migration off the old default (ctrl+r collides with session rename). */
+  hotkeyMigratedV2?: boolean;
 }
+
+/** V2 default: ctrl+r is factory-bound to session rename, so we no longer claim it. */
+export const V2_DEFAULT_HOTKEY = "ctrl+space";
+const LEGACY_DEFAULT_HOTKEY = "ctrl+r";
 
 export type SettingsUpdate = (mutation: (draft: VoiceSettings) => void) => Promise<void> | void;
 
@@ -18,7 +24,7 @@ export type SettingsUpdate = (mutation: (draft: VoiceSettings) => void) => Promi
 export function normalizeSettings(raw: Partial<VoiceSettings> = {}): VoiceSettings {
   const settings: VoiceSettings = { ...DEFAULT_SETTINGS, ...raw } as VoiceSettings;
   if (!getModel(settings.model)?.implemented) settings.model = DEFAULT_SETTINGS.model;
-  settings.recordingHotkey = String(settings.recordingHotkey || DEFAULT_SETTINGS.recordingHotkey).trim() || DEFAULT_SETTINGS.recordingHotkey;
+  settings.recordingHotkey = String(settings.recordingHotkey || V2_DEFAULT_HOTKEY).trim() || V2_DEFAULT_HOTKEY;
   settings.submitHotkey = String(settings.submitHotkey || "").trim();
   settings.language = String(settings.language || "auto").trim() || "auto";
   settings.mic = String(settings.mic || "").trim();
@@ -37,7 +43,14 @@ export function mergeLegacyHotkey(current: Partial<VoiceSettings>, legacy: { hot
   if (current.recordingHotkey) return current;
   const hold = String(legacy.hotkey ?? "").trim();
   const toggle = String(legacy.toggleHotkey ?? "").trim();
-  return { ...current, recordingHotkey: hold || toggle || DEFAULT_SETTINGS.recordingHotkey };
+  return { ...current, recordingHotkey: hold || toggle || V2_DEFAULT_HOTKEY };
+}
+
+/** One-time migration: old default ctrl+r -> ctrl+space (unless already migrated). */
+export function migrateHotkeyV2(settings: VoiceSettings): Partial<VoiceSettings> | undefined {
+  if (settings.hotkeyMigratedV2) return undefined;
+  if (settings.recordingHotkey !== LEGACY_DEFAULT_HOTKEY) return { hotkeyMigratedV2: true };
+  return { recordingHotkey: V2_DEFAULT_HOTKEY, hotkeyMigratedV2: true };
 }
 
 /** Options passed via cli.json act as initial overrides (first run only). */

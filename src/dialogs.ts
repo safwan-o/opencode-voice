@@ -164,8 +164,8 @@ export async function showMicrophonePicker(d: D): Promise<void> {
 export async function showRecordingHotkeyPicker(d: D): Promise<void> {
   const settings = settingsOf(d);
   const presets = [
-    { title: "Ctrl + R", value: "ctrl+r", description: "Start and stop recording." },
     { title: "Ctrl + Space", value: "ctrl+space", description: "Start and stop recording." },
+    { title: "Ctrl + R", value: "ctrl+r", description: "Start and stop recording (clashes with session rename)." },
     { title: "Alt + R", value: "alt+r", description: "Start and stop recording." },
     { title: "Custom hotkey", value: "__custom", description: "Enter another OpenCode keybinding." },
   ];

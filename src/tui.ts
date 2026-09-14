@@ -2,7 +2,7 @@ import { Plugin } from "@opencode/plugin/tui";
 import { VoiceRuntime } from "../lib/engine.js";
 import { DEFAULT_SETTINGS } from "../lib/models.js";
 import { showError, showModelPicker, showSettings, shouldShowStartupModelPicker } from "./dialogs.ts";
-import { normalizeSettings, optionsOverlay } from "./settings.ts";
+import { normalizeSettings, migrateHotkeyV2, optionsOverlay } from "./settings.ts";
 import { createVoiceController } from "./voice.ts";
 
 export default Plugin.define({
@@ -23,6 +23,22 @@ export default Plugin.define({
 
     const notify = (message: string, variant: "info" | "success" | "warning" | "error" = "info") =>
       ctx.ui.toast.show({ title: "Voice", message, variant });
+
+    // One-time: move installs off the old ctrl+r default (session rename owns it).
+    {
+      const migration = migrateHotkeyV2(normalizeSettings(store as unknown as Parameters<typeof normalizeSettings>[0]));
+      if (migration && migration.recordingHotkey) {
+        const patch = migration;
+        void updateStore((draft) => {
+          Object.assign(draft, patch);
+        }).then(() => notify("Voice record key moved to ctrl+space (ctrl+r is session rename). Change it in /voice-settings."));
+      } else if (migration) {
+        const patch = migration;
+        void updateStore((draft) => {
+          Object.assign(draft, patch);
+        });
+      }
+    }
 
     const deps = {
       dialog: ctx.ui.dialog,
