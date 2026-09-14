@@ -78,12 +78,17 @@ export default Plugin.define({
 
     const openSettings = () => void showSettings(deps);
 
-    ctx.keymap.layer(() => {
-      const settings = getSettings();
-      return {
-        mode: "global",
-        priority: 100,
-        commands: [
+    // keymap.layer needs Solid component context (else "Keymap.Provider is
+    // missing"): register it from the app slot's render function.
+    const stopSlot = ctx.ui.slot({
+      append: "app",
+      render: () => {
+        ctx.keymap.layer(() => {
+          const settings = getSettings();
+          return {
+            mode: "global",
+            priority: 100,
+            commands: [
           {
             id: "voice.record",
             title: "Voice: record",
@@ -124,12 +129,16 @@ export default Plugin.define({
           },
         ],
         bindings: ["voice.record", "voice.submit"],
-      };
+          };
+        });
+        return null;
+      },
     });
 
     if (shouldShowStartupModelPicker(deps)) void showModelPicker(deps, true);
 
     return () => {
+      stopSlot();
       runtime.cancel();
     };
   },

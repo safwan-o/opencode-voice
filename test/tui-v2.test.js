@@ -172,6 +172,7 @@ test("setup registers V2 keymap commands and runs record", async () => {
   const prompted = [];
   const runtime = stubRuntime();
   let layerFn;
+  let slotClaim;
   const toasts = [];
   const ctx = {
     options: { createRuntime: () => runtime, ready: readyStub },
@@ -180,6 +181,10 @@ test("setup registers V2 keymap commands and runs record", async () => {
       toast: { show: (t) => toasts.push(t) },
       dialog: dialog.api,
       router: { current: () => ({ type: "session", sessionID: "s1" }) },
+      slot: (claim) => {
+        slotClaim = claim;
+        return () => {};
+      },
     },
     keymap: { layer: (fn) => (layerFn = fn) },
     client: { session: { prompt: async (i) => prompted.push(i) } },
@@ -188,6 +193,8 @@ test("setup registers V2 keymap commands and runs record", async () => {
   assert.equal(typeof cleanup, "function");
   assert.equal(store.state.recordingHotkey, "ctrl+space");
   assert.equal(store.state.hotkeyMigratedV2, true);
+  assert.equal(slotClaim.append, "app");
+  slotClaim.render();
   const layer = layerFn();
   assert.equal(layer.mode, "global");
   const ids = layer.commands.map((c) => c.id);
@@ -211,6 +218,7 @@ test("deliver falls back to dialog outside a session", async () => {
   const prompted = [];
   const runtime = stubRuntime();
   let layerFn;
+  let slotClaim;
   const ctx = {
     options: { createRuntime: () => runtime, ready: readyStub },
     storage: { store: () => [store.state, store.update] },
@@ -218,11 +226,17 @@ test("deliver falls back to dialog outside a session", async () => {
       toast: { show: () => {} },
       dialog: dialog.api,
       router: { current: () => ({ type: "home" }) },
+      slot: (claim) => {
+        slotClaim = claim;
+        return () => {};
+      },
     },
     keymap: { layer: (fn) => (layerFn = fn) },
     client: { session: { prompt: async (i) => prompted.push(i) } },
   };
-  await tui.setup(ctx);
+  const stop = await tui.setup(ctx);
+  assert.equal(typeof stop, "function");
+  slotClaim.render();
   const record = layerFn().commands[0];
   await record.run();
   await record.run();
