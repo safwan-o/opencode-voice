@@ -15,3 +15,10 @@
 ## Remaining (interactive, needs a human terminal)
 - `ctrl+r` record toggle, `/voice-settings` navigation, model download — to verify in a live session.
 - Publish/unpublish decision for npm (`@hxnnxs` upstream vs fork scope) — Phase5.
+
+## Phase5 live verification (2026-09-15, published `@safwan-o/opencode-voice@0.3.0`)
+- `cli.json` -> npm spec. TUI boot installs async (staging dirs appear; allow ~60s
+  on first boot, the TUI gives up waiting earlier — rerun once after install completes).
+- Result: `plugin failed: 0`; palette shows Voice: record/submit/stop; startup picker renders.
+- Do NOT `opencode plugin add` it: that registers server `plugins` in `opencode.json`,
+  which fails (`server()` missing — package is CLI-only). Keep it in `cli.json` only.
