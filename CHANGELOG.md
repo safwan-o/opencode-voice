@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1 - 2026-09-15
+
+### Fixed
+
+- Model picker rows fit narrow dialogs: short titles (no status tags),
+  one-word status, compact `size · langs · engine` footer.
+
 ## 0.3.0 - 2026-09-15
 
 ### Added

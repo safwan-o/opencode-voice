@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEFAULT_SETTINGS } from "../lib/models.js";
-import { showLanguagePicker, showRecordingSettings, showTranscriptionSettings } from "../src/dialogs.ts";
+import { showLanguagePicker, showModelPicker, showRecordingSettings, showTranscriptionSettings } from "../src/dialogs.ts";
 import { formatBytes, progressBar } from "../src/formatters.ts";
 import { mergeLegacyHotkey, normalizeSettings } from "../src/settings.ts";
 import tui from "../src/tui.ts";
@@ -18,7 +18,7 @@ function mockStore(initial = {}) {
 }
 
 function mockDialog(answers = {}) {
-  const log = { alerts: [], prompts: [], selects: [] };
+  const log = { alerts: [], prompts: [], selects: [], selectArgs: [] };
   const selectQueue = [...(answers.select ?? [])];
   const promptQueue = [...(answers.prompt ?? [])];
   return {
@@ -37,6 +37,7 @@ function mockDialog(answers = {}) {
       },
       select: async (o) => {
         log.selects.push(o.title);
+        log.selectArgs.push(o);
         return selectQueue.shift();
       },
     },
@@ -266,4 +267,22 @@ test("recording hotkey preset updates store", async () => {
   const d = { dialog: dialog.api, toast: () => {}, options: {}, getSettings: () => store.state, update: store.update };
   await showRecordingSettings(d);
   assert.equal(store.state.recordingHotkey, "alt+r");
+});
+
+test("model picker options fit narrow dialog", async () => {
+  const store = mockStore({});
+  const toasts = [];
+  const dialog = mockDialog({ select: ["__skip"] });
+  const d = { dialog: dialog.api, toast: (m) => toasts.push(m), options: {}, getSettings: () => store.state, update: store.update };
+  await showModelPicker(d, true);
+  const picker = dialog.log.selectArgs[0];
+  assert.ok(picker.options.length > 10);
+  for (const opt of picker.options) {
+    if (opt.value === "__skip") continue;
+    assert.ok(opt.title.length <= 40, `title too long: ${opt.title}`);
+    assert.ok(!opt.title.includes("["), `no status tags in title: ${opt.title}`);
+    assert.match(opt.description, /^(downloaded|download|planned|needs verification)$/);
+    assert.ok(opt.footer.length <= 45, `footer too long: ${opt.footer}`);
+  }
+  assert.equal(store.state.setupSkipped, true);
 });
