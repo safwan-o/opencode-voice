@@ -110,7 +110,6 @@ export default Plugin.define({
             title: "Voice: submit",
             description: "Toggle local voice recording and submit after transcription.",
             group: "Voice",
-            bind: settings.submitHotkey || false,
             palette: true as const,
             slash: { name: "voice-submit" },
             run: () => controller.toggle(true),
@@ -134,7 +133,7 @@ export default Plugin.define({
             run: openSettings,
           },
         ],
-        bindings: ["voice.record", "voice.submit"],
+        bindings: ["voice.record"],
           };
         });
         return null;
