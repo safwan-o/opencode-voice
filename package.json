@@ -56,8 +56,7 @@
     "solid-js": "^1.9.15"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "peerDependencies": {
     "@opencode-ai/plugin": ">=1.17.4 <2"
