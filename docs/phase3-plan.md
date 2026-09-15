@@ -13,9 +13,10 @@
 ## Known V2 limitation (documented, not silent)
 V2 CLI API has NO composer-append: `ctx.client` has no `tui.appendPrompt`; `tui.prompt.append`
 is consumed by the TUI prompt component (`packages/tui/src/component/prompt/index.tsx:237`)
-with no publisher API for CLI plugins. So transcription delivery = `ctx.client.session.prompt({sessionID, text})`
-(submit semantics = V1 `autoSubmit:true`); outside a session, text is shown in an alert dialog.
-Append-without-submit returns if upstream adds a composer API.
+with no publisher API for CLI plugins (rechecked against `@opencode/plugin@2.0.3` + CLI docs).
+So delivery = review-before-send: `submit`/`autoSubmit` sends via `session.prompt` immediately,
+otherwise a `dialog.prompt` prefilled with the transcription (confirm submits, cancel discards).
+Outside a session, text is shown in an alert dialog. True append returns if upstream adds a composer API.
 
 ## Slices (commits, one PR after full gate)
 - 3a `src/settings|formatters|languages.ts` — pure, unit-tested.

@@ -169,7 +169,7 @@ test("controller cancel stops runtime", () => {
 
 test("setup registers V2 keymap commands and runs record", async () => {
   const store = mockStore({ onboardingDone: true, setupSkipped: true });
-  const dialog = mockDialog();
+  const dialog = mockDialog({ prompt: ["hello world "] });
   const prompted = [];
   const runtime = stubRuntime();
   let layerFn;
@@ -285,4 +285,65 @@ test("model picker options fit narrow dialog", async () => {
     assert.ok(opt.footer.length <= 45, `footer too long: ${opt.footer}`);
   }
   assert.equal(store.state.setupSkipped, true);
+});
+
+test("review dialog discard sends nothing", async () => {
+  const store = mockStore({ onboardingDone: true, setupSkipped: true });
+  const dialog = mockDialog({ prompt: [undefined] });
+  const prompted = [];
+  const runtime = stubRuntime();
+  let layerFn;
+  let slotClaim;
+  const ctx = {
+    options: { createRuntime: () => runtime, ready: readyStub },
+    storage: { store: () => [store.state, store.update] },
+    ui: {
+      toast: { show: () => {} },
+      dialog: dialog.api,
+      router: { current: () => ({ type: "session", sessionID: "s1" }) },
+      slot: (claim) => {
+        slotClaim = claim;
+        return () => {};
+      },
+    },
+    keymap: { layer: (fn) => (layerFn = fn) },
+    client: { session: { prompt: async (i) => prompted.push(i) } },
+  };
+  await tui.setup(ctx);
+  slotClaim.render();
+  const record = layerFn().commands[0];
+  await record.run();
+  await record.run();
+  assert.equal(prompted.length, 0);
+});
+
+test("autoSubmit sends immediately without review", async () => {
+  const store = mockStore({ onboardingDone: true, setupSkipped: true, autoSubmit: true });
+  const dialog = mockDialog();
+  const prompted = [];
+  const runtime = stubRuntime();
+  let layerFn;
+  let slotClaim;
+  const ctx = {
+    options: { createRuntime: () => runtime, ready: readyStub },
+    storage: { store: () => [store.state, store.update] },
+    ui: {
+      toast: { show: () => {} },
+      dialog: dialog.api,
+      router: { current: () => ({ type: "session", sessionID: "s1" }) },
+      slot: (claim) => {
+        slotClaim = claim;
+        return () => {};
+      },
+    },
+    keymap: { layer: (fn) => (layerFn = fn) },
+    client: { session: { prompt: async (i) => prompted.push(i) } },
+  };
+  await tui.setup(ctx);
+  slotClaim.render();
+  const record = layerFn().commands[0];
+  await record.run();
+  await record.run();
+  assert.equal(prompted.length, 1);
+  assert.equal(dialog.log.prompts.length, 0);
 });
