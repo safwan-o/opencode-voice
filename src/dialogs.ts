@@ -47,7 +47,7 @@ async function set(d: D, name: keyof VoiceSettings, value: VoiceSettings[keyof V
 function modelStatusText(model: ReturnType<typeof getModel>, options: Record<string, unknown>, settings: VoiceSettings): string {
   if (!model.implemented) return "planned";
   if (isModelFilePresent(model, options, settings) && !isModelDownloaded(model, options, settings)) return "needs verification";
-  return isModelDownloaded(model, options, settings) ? "downloaded" : "not downloaded";
+  return isModelDownloaded(model, options, settings) ? "downloaded" : "download";
 }
 
 function errText(error: unknown): string {
@@ -67,14 +67,19 @@ export async function showModelPicker(d: D, firstRun = false): Promise<void> {
     current: settings.model,
     options: [
       ...MODELS.map((model) => {
-        const downloaded = model.implemented && isModelDownloaded(model, d.options, settings);
+        // Row renders as one clipped line: title + description, footer right.
+        // Keep every field a short token so names/status stay readable.
+        const rawLangs = model.languages;
+        const langs = rawLangs.length > 20 ? `${rawLangs.split(",").length} langs` : rawLangs;
+        // Display name only (value keeps full id); strip redundant packaging suffix.
+        const label = model.name.replace(/-gguf$/, "");
         return {
-          title: `${downloaded ? "[downloaded]" : model.implemented ? "[download]" : "[planned]"} ${model.name} - ${formatSize(model)}`,
+          title: label,
           value: model.id,
           category: model.implemented ? "Available now" : "Planned sidecar models",
           disabled: !model.implemented,
-          description: `${model.engine} - ${model.languages} - ${modelStatusText(model, d.options, settings)}`,
-          footer: model.description,
+          description: modelStatusText(model, d.options, settings),
+          footer: `${formatSize(model)} · ${langs} · ${model.engine}`,
         };
       }),
       ...(firstRun
