@@ -59,15 +59,20 @@ export default Plugin.define({
       (ctx.options ?? {}) as Record<string, unknown>
     ).clipboard as { copyText?: typeof copyText } | undefined;
     const copy = clipboard?.copyText ?? copyText;
-    // No composer-append API exists in V2, so autoSubmit OFF copies the
-    // transcription to the OS clipboard (Ctrl+V into the main textbox,
-    // where images can also be attached). ON submits immediately.
+    // No composer-append API exists in V2: OFF copies to the OS clipboard
+    // (user pastes where they want), ON submits immediately.
     const deliver = async (text: string, submit: boolean): Promise<void> => {
       const next = text.endsWith(" ") ? text : `${text} `;
-      const sessionID = currentSessionID();
       if (submit) {
+        const sessionID = currentSessionID();
         if (!sessionID) {
-          await ctx.ui.dialog.alert({ title: "Voice transcription", message: next });
+          try {
+            await copy(next);
+          } catch (error) {
+            notify(error instanceof Error ? error.message : String(error), "error");
+            return;
+          }
+          notify("Transcription is in clipboard.");
           return;
         }
         await ctx.client.session.prompt({ sessionID, text: next });
@@ -75,11 +80,11 @@ export default Plugin.define({
       }
       try {
         await copy(next);
-        notify("Transcription copied — paste with Ctrl+V", "success");
       } catch (error) {
         notify(error instanceof Error ? error.message : String(error), "error");
-        await ctx.ui.dialog.alert({ title: "Voice transcription", message: next });
+        return;
       }
+      notify("Transcription is in clipboard.");
     };
 
     const controller = createVoiceController({

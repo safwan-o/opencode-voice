@@ -214,7 +214,7 @@ test("setup registers V2 keymap commands and runs record", async () => {
   await record.run();
   assert.deepEqual(copied, ["hello world "]);
   assert.equal(prompted.length, 0);
-  assert.ok(toasts.some((t) => t.message.includes("Ctrl+V")));
+  assert.ok(toasts.some((t) => t.message === "Transcription is in clipboard."));
   await cleanup();
   assert.equal(runtime.cancelled, true);
 });
@@ -295,7 +295,7 @@ test("clipboard failure shows error and falls back to dialog", async () => {
   await record.run();
   assert.equal(prompted.length, 0);
   assert.ok(toasts.some((t) => t.variant === "error"));
-  assert.equal(dialog.log.alerts[0].title, "Voice transcription");
+  assert.equal(dialog.log.alerts.length, 0);
 });
 
 test("clipboard picks platform tools with fallback", async () => {
@@ -368,15 +368,20 @@ test("model picker options fit narrow dialog", async () => {
   assert.equal(store.state.setupSkipped, true);
 });
 
-test("submit outside a session falls back to alert dialog", async () => {
+test("submit outside a session degrades to clipboard", async () => {
   const store = mockStore({ onboardingDone: true, setupSkipped: true });
   const dialog = mockDialog();
+  const copied = [];
   const prompted = [];
   const runtime = stubRuntime();
   let layerFn;
   let slotClaim;
   const ctx = {
-    options: { createRuntime: () => runtime, ready: readyStub },
+    options: {
+      createRuntime: () => runtime,
+      ready: readyStub,
+      clipboard: { copyText: async (t) => void copied.push(t) },
+    },
     storage: { store: () => [store.state, store.update] },
     ui: {
       toast: { show: () => {} },
@@ -397,7 +402,8 @@ test("submit outside a session falls back to alert dialog", async () => {
   await submit.run();
   await submit.run();
   assert.equal(prompted.length, 0);
-  assert.equal(dialog.log.alerts[0].title, "Voice transcription");
+  assert.deepEqual(copied, ["hello world "]);
+  assert.equal(dialog.log.alerts.length, 0);
 });
 
 test("autoSubmit sends immediately without review", async () => {
