@@ -53,16 +53,22 @@ export default Plugin.define({
       return route?.type === "session" ? route.sessionID : undefined;
     };
 
-    // V2 CLI API has no composer-append: transcription is submitted as a user
-    // message when inside a session, otherwise shown for copy. See phase3 plan.
-    const deliver = async (text: string, _submit: boolean): Promise<void> => {
+    // V2 CLI API has no composer-append: submit=true sends immediately;
+    // otherwise the user reviews/edits first (autoSubmit=false respected).
+    const deliver = async (text: string, submit: boolean): Promise<void> => {
       const next = text.endsWith(" ") ? text : `${text} `;
       const sessionID = currentSessionID();
       if (!sessionID) {
         await ctx.ui.dialog.alert({ title: "Voice transcription", message: next });
         return;
       }
-      await ctx.client.session.prompt({ sessionID, text: next });
+      if (submit) {
+        await ctx.client.session.prompt({ sessionID, text: next });
+        return;
+      }
+      const edited = await ctx.ui.dialog.prompt({ title: "Voice transcription", value: next });
+      if (edited === undefined) return;
+      await ctx.client.session.prompt({ sessionID, text: edited });
     };
 
     const controller = createVoiceController({
