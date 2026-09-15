@@ -1,23 +1,16 @@
 # Changelog
 
-## 0.3.2 - 2026-09-15
-
-### Changed
-
-- Removed the submit shortcut: transcription goes to a review dialog for editing
-  (Enter submits, Esc discards) unless auto-submit is on. No composer-append API
-  exists in `@opencode/plugin`, so the dialog is the edit box.
-- Removed the now-dead `submitHotkey` setting and Submit-key picker row.
-
-
 ## 0.3.2 - 2026-09-16
 
 ### Changed
 
 - Auto-submit OFF now copies the transcription to the OS clipboard
-  (wl-copy/pbcopy/clip/xclip/xsel with fallback + install hint) instead of a
-  separate review box: Ctrl+V drops it into the main textbox, where images can
-  also be attached. Review dialog removed; submit shortcut removed.
+  (wl-copy/pbcopy/clip/xclip/xsel with fallback + install hint): paste it into
+  the main textbox, where images can also be attached. No separate review box.
+- Removed the submit shortcut and the now-dead `submitHotkey` setting: the only
+  switch is auto-submit on/off, plus explicit `/voice-submit` to send now.
+- No composer-append API exists in `@opencode/plugin`, so clipboard is the
+  delivery path when not auto-submitting.
 
 ## 0.3.1 - 2026-09-15
 
