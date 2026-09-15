@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.2 - 2026-09-15
+
+### Changed
+
+- Removed the submit shortcut: transcription goes to a review dialog for editing
+  (Enter submits, Esc discards) unless auto-submit is on. No composer-append API
+  exists in `@opencode/plugin`, so the dialog is the edit box.
+- Removed the now-dead `submitHotkey` setting and Submit-key picker row.
+
+
 ## 0.3.1 - 2026-09-15
 
 ### Fixed

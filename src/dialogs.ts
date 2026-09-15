@@ -289,7 +289,6 @@ export async function showTranscriptionSettings(d: D): Promise<void> {
       { title: downloaded ? "Re-download model" : "Download model", value: "download", description: `${model.name} · ${formatSize(model)}` },
       { title: "Language", value: "language", description: settings.language === "auto" ? "auto detect" : settings.language },
       { title: "Auto-submit", value: "autoSubmit", description: settings.autoSubmit ? "enabled" : "disabled" },
-      { title: "Submit key", value: "submitHotkey", description: settings.submitHotkey || "disabled" },
     ],
   });
   if (picked === undefined) return showSettings(d);
@@ -307,12 +306,6 @@ export async function showTranscriptionSettings(d: D): Promise<void> {
   if (picked === "language") return showLanguagePicker(d);
   if (picked === "autoSubmit") {
     await set(d, "autoSubmit", !settings.autoSubmit);
-    return showTranscriptionSettings(d);
-  }
-  if (picked === "submitHotkey") {
-    const value = await d.dialog.prompt({ title: "Submit recording key", placeholder: "leader r or empty to disable", value: settings.submitHotkey });
-    if (value === undefined) return showTranscriptionSettings(d);
-    await set(d, "submitHotkey", value.trim());
     return showTranscriptionSettings(d);
   }
 }

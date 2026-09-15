@@ -2,7 +2,6 @@ import { DEFAULT_SETTINGS, getModel } from "../lib/models.js";
 
 export interface VoiceSettings {
   recordingHotkey: string;
-  submitHotkey: string;
   model: string;
   language: string;
   mic: string;
@@ -25,7 +24,6 @@ export function normalizeSettings(raw: Partial<VoiceSettings> = {}): VoiceSettin
   const settings: VoiceSettings = { ...DEFAULT_SETTINGS, ...raw } as VoiceSettings;
   if (!getModel(settings.model)?.implemented) settings.model = DEFAULT_SETTINGS.model;
   settings.recordingHotkey = String(settings.recordingHotkey || V2_DEFAULT_HOTKEY).trim() || V2_DEFAULT_HOTKEY;
-  settings.submitHotkey = String(settings.submitHotkey || "").trim();
   settings.language = String(settings.language || "auto").trim() || "auto";
   settings.mic = String(settings.mic || "").trim();
   settings.downloadDir = String(settings.downloadDir || "").trim();
@@ -56,7 +54,7 @@ export function migrateHotkeyV2(settings: VoiceSettings): Partial<VoiceSettings>
 /** Options passed via cli.json act as initial overrides (first run only). */
 export function optionsOverlay(options: Record<string, unknown> = {}): Partial<VoiceSettings> {
   const overlay: Partial<VoiceSettings> = {};
-  for (const key of ["recordingHotkey", "submitHotkey", "model", "language", "mic", "autoSubmit", "downloadDir"] as const) {
+  for (const key of ["recordingHotkey", "model", "language", "mic", "autoSubmit", "downloadDir"] as const) {
     if (options[key] !== undefined) (overlay as Record<string, unknown>)[key] = options[key];
   }
   return overlay;
