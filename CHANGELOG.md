@@ -10,6 +10,15 @@
 - Removed the now-dead `submitHotkey` setting and Submit-key picker row.
 
 
+## 0.3.2 - 2026-09-16
+
+### Changed
+
+- Auto-submit OFF now copies the transcription to the OS clipboard
+  (wl-copy/pbcopy/clip/xclip/xsel with fallback + install hint) instead of a
+  separate review box: Ctrl+V drops it into the main textbox, where images can
+  also be attached. Review dialog removed; submit shortcut removed.
+
 ## 0.3.1 - 2026-09-15
 
 ### Fixed

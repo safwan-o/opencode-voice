@@ -1,6 +1,7 @@
 import { Plugin } from "@opencode/plugin/tui";
 import { VoiceRuntime } from "../lib/engine.js";
 import { DEFAULT_SETTINGS } from "../lib/models.js";
+import { copyText } from "./clipboard.ts";
 import { showError, showModelPicker, showSettings, shouldShowStartupModelPicker } from "./dialogs.ts";
 import { normalizeSettings, migrateHotkeyV2, optionsOverlay } from "./settings.ts";
 import { createVoiceController } from "./voice.ts";
@@ -53,22 +54,32 @@ export default Plugin.define({
       return route?.type === "session" ? route.sessionID : undefined;
     };
 
-    // V2 CLI API has no composer-append: submit=true sends immediately;
-    // otherwise the user reviews/edits first (autoSubmit=false respected).
+    // Test seam: ctx.options.clipboard overrides the OS clipboard writer.
+    const clipboard = (
+      (ctx.options ?? {}) as Record<string, unknown>
+    ).clipboard as { copyText?: typeof copyText } | undefined;
+    const copy = clipboard?.copyText ?? copyText;
+    // No composer-append API exists in V2, so autoSubmit OFF copies the
+    // transcription to the OS clipboard (Ctrl+V into the main textbox,
+    // where images can also be attached). ON submits immediately.
     const deliver = async (text: string, submit: boolean): Promise<void> => {
       const next = text.endsWith(" ") ? text : `${text} `;
       const sessionID = currentSessionID();
-      if (!sessionID) {
-        await ctx.ui.dialog.alert({ title: "Voice transcription", message: next });
-        return;
-      }
       if (submit) {
+        if (!sessionID) {
+          await ctx.ui.dialog.alert({ title: "Voice transcription", message: next });
+          return;
+        }
         await ctx.client.session.prompt({ sessionID, text: next });
         return;
       }
-      const edited = await ctx.ui.dialog.prompt({ title: "Voice transcription", value: next });
-      if (edited === undefined) return;
-      await ctx.client.session.prompt({ sessionID, text: edited });
+      try {
+        await copy(next);
+        notify("Transcription copied — paste with Ctrl+V", "success");
+      } catch (error) {
+        notify(error instanceof Error ? error.message : String(error), "error");
+        await ctx.ui.dialog.alert({ title: "Voice transcription", message: next });
+      }
     };
 
     const controller = createVoiceController({
