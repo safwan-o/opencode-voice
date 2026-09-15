@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.4 - 2026-09-16
+
+### Fixed
+
+- Serialized controller with a phase lock: rapid presses no longer double-start
+  recording or queue duplicate transcriptions. Transitional presses get
+  accurate Starting/Stopping toasts.
+
+
 ## 0.3.3 - 2026-09-16
 
 ### Changed
