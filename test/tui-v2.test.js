@@ -6,6 +6,7 @@ import { formatBytes, progressBar } from "../src/formatters.ts";
 import { mergeLegacyHotkey, normalizeSettings } from "../src/settings.ts";
 import tui from "../src/tui.ts";
 import { createVoiceController } from "../src/voice.ts";
+import { copyText } from "../src/clipboard.ts";
 
 function mockStore(initial = {}) {
   const draft = { ...DEFAULT_SETTINGS, ...initial };
@@ -169,14 +170,19 @@ test("controller cancel stops runtime", () => {
 
 test("setup registers V2 keymap commands and runs record", async () => {
   const store = mockStore({ onboardingDone: true, setupSkipped: true });
-  const dialog = mockDialog({ prompt: ["hello world "] });
+  const dialog = mockDialog();
+  const copied = [];
   const prompted = [];
   const runtime = stubRuntime();
   let layerFn;
   let slotClaim;
   const toasts = [];
   const ctx = {
-    options: { createRuntime: () => runtime, ready: readyStub },
+    options: {
+      createRuntime: () => runtime,
+      ready: readyStub,
+      clipboard: { copyText: async (t) => void copied.push(t) },
+    },
     storage: { store: () => [store.state, store.update] },
     ui: {
       toast: { show: (t) => toasts.push(t) },
@@ -206,22 +212,27 @@ test("setup registers V2 keymap commands and runs record", async () => {
   await record.run();
   assert.equal(runtime.recording, true);
   await record.run();
-  assert.equal(prompted.length, 1);
-  assert.equal(prompted[0].sessionID, "s1");
-  assert.ok(prompted[0].text.endsWith(" "));
+  assert.deepEqual(copied, ["hello world "]);
+  assert.equal(prompted.length, 0);
+  assert.ok(toasts.some((t) => t.message.includes("Ctrl+V")));
   await cleanup();
   assert.equal(runtime.cancelled, true);
 });
 
-test("deliver falls back to dialog outside a session", async () => {
+test("deliver copies to clipboard outside a session too", async () => {
   const store = mockStore({ onboardingDone: true, setupSkipped: true });
   const dialog = mockDialog();
+  const copied = [];
   const prompted = [];
   const runtime = stubRuntime();
   let layerFn;
   let slotClaim;
   const ctx = {
-    options: { createRuntime: () => runtime, ready: readyStub },
+    options: {
+      createRuntime: () => runtime,
+      ready: readyStub,
+      clipboard: { copyText: async (t) => void copied.push(t) },
+    },
     storage: { store: () => [store.state, store.update] },
     ui: {
       toast: { show: () => {} },
@@ -241,8 +252,78 @@ test("deliver falls back to dialog outside a session", async () => {
   const record = layerFn().commands[0];
   await record.run();
   await record.run();
+  assert.deepEqual(copied, ["hello world "]);
   assert.equal(prompted.length, 0);
+  assert.equal(dialog.log.alerts.length, 0);
+});
+
+test("clipboard failure shows error and falls back to dialog", async () => {
+  const store = mockStore({ onboardingDone: true, setupSkipped: true });
+  const dialog = mockDialog();
+  const prompted = [];
+  const runtime = stubRuntime();
+  const toasts = [];
+  let layerFn;
+  let slotClaim;
+  const ctx = {
+    options: {
+      createRuntime: () => runtime,
+      ready: readyStub,
+      clipboard: {
+        copyText: async () => {
+          throw new Error("No clipboard tool worked (tried wl-copy). Install wl-clipboard package.");
+        },
+      },
+    },
+    storage: { store: () => [store.state, store.update] },
+    ui: {
+      toast: { show: (t) => toasts.push(t) },
+      dialog: dialog.api,
+      router: { current: () => ({ type: "session", sessionID: "s1" }) },
+      slot: (claim) => {
+        slotClaim = claim;
+        return () => {};
+      },
+    },
+    keymap: { layer: (fn) => (layerFn = fn) },
+    client: { session: { prompt: async (i) => prompted.push(i) } },
+  };
+  await tui.setup(ctx);
+  slotClaim.render();
+  const record = layerFn().commands[0];
+  await record.run();
+  await record.run();
+  assert.equal(prompted.length, 0);
+  assert.ok(toasts.some((t) => t.variant === "error"));
   assert.equal(dialog.log.alerts[0].title, "Voice transcription");
+});
+
+test("clipboard picks platform tools with fallback", async () => {
+  const calls = [];
+  const ok = async (command, args, input) => void calls.push([command, input]);
+  const fail = async () => {
+    throw new Error("nope");
+  };
+  let r = await copyText("hi", { platform: "darwin", run: ok });
+  assert.equal(r.method, "pbcopy");
+  r = await copyText("hi", { platform: "win32", run: ok });
+  assert.equal(r.method, "clip");
+  r = await copyText("hi", { platform: "linux", wayland: true, run: ok });
+  assert.equal(r.method, "wl-copy");
+  assert.deepEqual(calls[2], ["wl-copy", "hi"]);
+  calls.length = 0;
+  let n = 0;
+  r = await copyText("hi", {
+    platform: "linux",
+    wayland: false,
+    run: async (c, a, i) => {
+      n++;
+      if (n === 1) return fail();
+      return ok(c, a, i);
+    },
+  });
+  assert.equal(r.method, "xsel");
+  await assert.rejects(() => copyText("hi", { platform: "linux", wayland: false, run: fail }), /No clipboard tool worked/);
 });
 
 test("transcription settings toggle autoSubmit", async () => {
@@ -287,9 +368,9 @@ test("model picker options fit narrow dialog", async () => {
   assert.equal(store.state.setupSkipped, true);
 });
 
-test("review dialog discard sends nothing", async () => {
+test("submit outside a session falls back to alert dialog", async () => {
   const store = mockStore({ onboardingDone: true, setupSkipped: true });
-  const dialog = mockDialog({ prompt: [undefined] });
+  const dialog = mockDialog();
   const prompted = [];
   const runtime = stubRuntime();
   let layerFn;
@@ -300,7 +381,7 @@ test("review dialog discard sends nothing", async () => {
     ui: {
       toast: { show: () => {} },
       dialog: dialog.api,
-      router: { current: () => ({ type: "session", sessionID: "s1" }) },
+      router: { current: () => ({ type: "home" }) },
       slot: (claim) => {
         slotClaim = claim;
         return () => {};
@@ -311,10 +392,12 @@ test("review dialog discard sends nothing", async () => {
   };
   await tui.setup(ctx);
   slotClaim.render();
-  const record = layerFn().commands[0];
-  await record.run();
-  await record.run();
+  const submit = layerFn().commands[1];
+  assert.equal(submit.id, "voice.submit");
+  await submit.run();
+  await submit.run();
   assert.equal(prompted.length, 0);
+  assert.equal(dialog.log.alerts[0].title, "Voice transcription");
 });
 
 test("autoSubmit sends immediately without review", async () => {
