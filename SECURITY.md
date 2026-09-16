@@ -2,7 +2,8 @@
 
 ## Supported Versions
 
-The current `0.1.x` line receives security fixes while the project is actively maintained.
+The latest published `0.x` minor line receives security fixes while the project
+is actively maintained. Older lines are unsupported — upgrade.
 
 ## Reporting a Vulnerability
 
