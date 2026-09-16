@@ -184,8 +184,8 @@ npx @safwan-o/opencode-voice doctor
 ## Architecture
 
 This is an OpenCode V2 CLI plugin (`Plugin.define({ id, setup })` from
-`@opencode/plugin/tui`, `./tui` entry). The V1 `{ id, tui() }` entry in
-`index.js` is retained for backward compatibility only.
+`@opencode/plugin/tui`, `./tui` entry). Requires OpenCode 2.x (`engines.opencode`). The V1 `{ id, tui() }` entry in
+`index.js` is retained on a best-effort basis for old hosts — untested, unsupported.
 
 - V2 entry: `src/tui.ts` (setup, keymap layer, delivery)
 - `src/voice.ts` — record/transcribe controller with single-flight phase lock
