@@ -9,6 +9,7 @@
 </p>
 <p align="center">Local speech-to-text for the OpenCode TUI.</p>
 <p align="center">
+  <a href="https://github.com/safwan-o/opencode-voice/actions/workflows/release-check.yml"><img alt="CI" src="https://github.com/safwan-o/opencode-voice/actions/workflows/release-check.yml/badge.svg" /></a>
   <img alt="opencode" src="https://img.shields.io/badge/OpenCode-V2_TUI_plugin-black?style=flat-square" />
   <img alt="status" src="https://img.shields.io/badge/status-mvp-orange?style=flat-square" />
   <a href="https://www.npmjs.com/package/@safwan-o/opencode-voice"><img alt="npm version" src="https://img.shields.io/npm/v/@safwan-o/opencode-voice?style=flat-square" /></a>
