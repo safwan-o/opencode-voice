@@ -34,3 +34,13 @@ npm publish --dry-run
 - Confirm `opencode-voice doctor` reports both managed runtime probes.
 - Confirm model downloads write `.sha256` verification markers.
 - Tag the release after the GitHub Actions release check passes.
+
+## Local publish notes (no OIDC here)
+
+- Do **not** set `publishConfig.provenance` — local `npm publish` fails with
+  `EUSAGE` without a GitHub OIDC provider. Publish plainly:
+  `npm publish --access public`.
+- The v2.0.1 TUI loader installs npm specs only and caches aggressively:
+  after publishing, fully quit the TUI and reopen it twice (first boot
+  fetches/installs, second boot runs the new code). Verify with no
+  `Plugin failed` banner plus palette (`Voice: record`) and first-run picker.
