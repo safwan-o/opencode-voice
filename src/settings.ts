@@ -1,3 +1,4 @@
+import { normalizeCutoffHz } from "../lib/enhance.js";
 import { DEFAULT_SETTINGS, getModel } from "../lib/models.js";
 
 export interface VoiceSettings {
@@ -9,6 +10,8 @@ export interface VoiceSettings {
   downloadDir: string;
   onboardingDone: boolean;
   setupSkipped: boolean;
+  voiceEnhance?: boolean;
+  cleanupCutoffHz?: number;
   /** One-time V2 migration off the old default (ctrl+r collides with session rename). */
   hotkeyMigratedV2?: boolean;
 }
@@ -30,6 +33,8 @@ export function normalizeSettings(raw: Partial<VoiceSettings> = {}): VoiceSettin
   settings.autoSubmit = Boolean(settings.autoSubmit);
   settings.onboardingDone = Boolean(settings.onboardingDone);
   settings.setupSkipped = Boolean(settings.setupSkipped);
+  settings.voiceEnhance = (settings as Record<string, unknown>).voiceEnhance !== false;
+  settings.cleanupCutoffHz = normalizeCutoffHz((settings as Record<string, unknown>).cleanupCutoffHz);
   return settings;
 }
 
@@ -54,7 +59,7 @@ export function migrateHotkeyV2(settings: VoiceSettings): Partial<VoiceSettings>
 /** Options passed via cli.json act as initial overrides (first run only). */
 export function optionsOverlay(options: Record<string, unknown> = {}): Partial<VoiceSettings> {
   const overlay: Partial<VoiceSettings> = {};
-  for (const key of ["recordingHotkey", "model", "language", "mic", "autoSubmit", "downloadDir"] as const) {
+  for (const key of ["recordingHotkey", "model", "language", "mic", "autoSubmit", "downloadDir", "voiceEnhance", "cleanupCutoffHz"] as const) {
     if (options[key] !== undefined) (overlay as Record<string, unknown>)[key] = options[key];
   }
   return overlay;

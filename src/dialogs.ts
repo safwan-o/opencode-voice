@@ -269,12 +269,53 @@ export async function showRecordingSettings(d: D): Promise<void> {
     title: "Recording",
     options: [
       { title: "Record key", value: "key", description: settings.recordingHotkey || "not set" },
+      { title: "Voice cleanup", value: "cleanup", description: settings.voiceEnhance ? "enabled" : "disabled" },
+      {
+        title: "Rumble filter",
+        value: "cutoff",
+        description: settings.voiceEnhance ? `${settings.cleanupCutoffHz} Hz` : "off (cleanup disabled)",
+        disabled: !settings.voiceEnhance,
+      },
       { title: "Toggle recording", value: "toggle", description: "Press once to start and again to transcribe.", disabled: true },
       { title: "Hold to talk", value: "hold", description: "Unavailable until OpenCode provides key-release events.", disabled: true },
     ],
   });
   if (picked === undefined) return showSettings(d);
   if (picked === "key") return showRecordingHotkeyPicker(d);
+  if (picked === "cleanup") {
+    await set(d, "voiceEnhance", !settings.voiceEnhance);
+    return showRecordingSettings(d);
+  }
+  if (picked === "cutoff") return showCutoffPicker(d);
+  return showRecordingSettings(d);
+}
+
+export async function showCutoffPicker(d: D): Promise<void> {
+  const settings = settingsOf(d);
+  const presets = [
+    { title: "80 Hz", value: "80", description: "Gentle; keeps deep voices intact." },
+    { title: "120 Hz", value: "120", description: "Default; proven on rumble-choked clips." },
+    { title: "180 Hz", value: "180", description: "Aggressive; telephony-style." },
+    { title: "Custom cutoff", value: "__custom", description: "Enter a frequency in Hz (40-500)." },
+  ];
+  const picked = await d.dialog.select({
+    title: "Rumble filter cutoff",
+    current: presets.some((p) => p.value === String(settings.cleanupCutoffHz)) ? String(settings.cleanupCutoffHz) : "__custom",
+    options: presets,
+  });
+  if (picked === undefined) return showRecordingSettings(d);
+  if (picked === "__custom") {
+    const value = await d.dialog.prompt({ title: "Custom cutoff frequency", placeholder: "120", value: String(settings.cleanupCutoffHz) });
+    if (value === undefined) return showCutoffPicker(d);
+    const parsed = Number(String(value).trim());
+    if (!Number.isFinite(parsed) || parsed < 40 || parsed > 500) {
+      d.toast("Cutoff must be 40-500 Hz.", "warning");
+      return showCutoffPicker(d);
+    }
+    await set(d, "cleanupCutoffHz", Math.round(parsed));
+    return showRecordingSettings(d);
+  }
+  await set(d, "cleanupCutoffHz", Number(picked));
   return showRecordingSettings(d);
 }
 
