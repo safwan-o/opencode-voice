@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.4.0-beta.0 - 2026-09-17
+
+Beta: voice cleanup, race lock, standards gate. Install pinned, do not use
+as `latest`:
+
+```json
+{ "plugins": ["@safwan-o/opencode-voice@0.4.0-beta.0"] }
+```
+
+### Added
+
+- Voice cleanup chain (highpass/declick/normalize/limit) with toggle +
+  cutoff setting; pre-transcribe filtering for every recorder.
+- CVE-2026-54285 assessed (not exploitable here); TypeScript + lint gates;
+  CI matrix; coverage signal; templates.
+
+### Fixed
+
+- Controller phase lock: no double-start or queued transcriptions on spam.
+- Model picker rows fit narrow dialogs; record key defaults to ctrl+space;
+  review-before-send replaced by clipboard delivery.
+
+
 ## 0.3.4 - 2026-09-16
 
 ### Fixed
