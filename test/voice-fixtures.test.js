@@ -18,7 +18,10 @@ function haveFfmpeg() {
 // Guards fixture calibration: rumble must look rumbly, clean must not,
 // silence must be silent. Regenerates via the checked-in script first.
 test("voice fixtures are calibrated", { skip: !haveFfmpeg() && "ffmpeg not available" }, () => {
-  execFileSync("node", [path.join(root, "scripts", "gen-voice-fixtures.mjs")], { stdio: "pipe", cwd: root });
+  execFileSync("node", [path.join(root, "scripts", "gen-voice-fixtures.mjs")], {
+    stdio: "pipe",
+    cwd: root,
+  });
   const clean = readPcm16Mono(path.join(root, "test", "fixtures", "clean.wav"));
   const rumble = readPcm16Mono(path.join(root, "test", "fixtures", "rumble.wav"));
   const silence = readPcm16Mono(path.join(root, "test", "fixtures", "silence.wav"));

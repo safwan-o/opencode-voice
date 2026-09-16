@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEFAULT_SETTINGS } from "../lib/models.js";
-import { showLanguagePicker, showModelPicker, showRecordingSettings, showTranscriptionSettings } from "../src/dialogs.ts";
+import {
+  showLanguagePicker,
+  showModelPicker,
+  showRecordingSettings,
+  showTranscriptionSettings,
+} from "../src/dialogs.ts";
 import { formatBytes, progressBar } from "../src/formatters.ts";
 import { mergeLegacyHotkey, normalizeSettings } from "../src/settings.ts";
 import tui from "../src/tui.ts";
@@ -108,7 +113,13 @@ test("cleanup settings default on and normalize cutoff", () => {
 test("recording cleanup toggle flips and persists", async () => {
   const store = mockStore({});
   const dialog = mockDialog({ select: ["cleanup", undefined, undefined] });
-  const d = { dialog: dialog.api, toast: () => {}, options: {}, getSettings: () => store.state, update: store.update };
+  const d = {
+    dialog: dialog.api,
+    toast: () => {},
+    options: {},
+    getSettings: () => store.state,
+    update: store.update,
+  };
   await showRecordingSettings(d);
   assert.equal(store.state.voiceEnhance, false);
 });
@@ -116,21 +127,39 @@ test("recording cleanup toggle flips and persists", async () => {
 test("cutoff presets and custom validation", async () => {
   const store = mockStore({});
   let dialog = mockDialog({ select: ["cutoff", "180", undefined, undefined] });
-  let d = { dialog: dialog.api, toast: () => {}, options: {}, getSettings: () => store.state, update: store.update };
+  let d = {
+    dialog: dialog.api,
+    toast: () => {},
+    options: {},
+    getSettings: () => store.state,
+    update: store.update,
+  };
   await showRecordingSettings(d);
   assert.equal(store.state.cleanupCutoffHz, 180);
   const toasts = [];
   dialog = mockDialog({ select: ["cutoff", "__custom", undefined, undefined], prompt: ["9"] });
-  d = { dialog: dialog.api, toast: (m) => toasts.push(m), options: {}, getSettings: () => store.state, update: store.update };
+  d = {
+    dialog: dialog.api,
+    toast: (m) => toasts.push(m),
+    options: {},
+    getSettings: () => store.state,
+    update: store.update,
+  };
   await showRecordingSettings(d);
   assert.equal(store.state.cleanupCutoffHz, 180);
   assert.ok(toasts.length > 0);
 });
 
 test("mergeLegacyHotkey prefers explicit hold key", () => {
-  assert.equal(mergeLegacyHotkey({}, { hotkey: "alt+r", toggleHotkey: "ctrl+r" }).recordingHotkey, "alt+r");
+  assert.equal(
+    mergeLegacyHotkey({}, { hotkey: "alt+r", toggleHotkey: "ctrl+r" }).recordingHotkey,
+    "alt+r",
+  );
   assert.equal(mergeLegacyHotkey({}, { toggleHotkey: "ctrl+space" }).recordingHotkey, "ctrl+space");
-  assert.equal(mergeLegacyHotkey({ recordingHotkey: "ctrl+r" }, { hotkey: "alt+r" }).recordingHotkey, "ctrl+r");
+  assert.equal(
+    mergeLegacyHotkey({ recordingHotkey: "ctrl+r" }, { hotkey: "alt+r" }).recordingHotkey,
+    "ctrl+r",
+  );
   assert.equal(mergeLegacyHotkey({}, {}).recordingHotkey, "ctrl+space");
 });
 
@@ -140,8 +169,13 @@ test("migrateHotkeyV2 moves old default once", async () => {
     recordingHotkey: "ctrl+space",
     hotkeyMigratedV2: true,
   });
-  assert.deepEqual(migrateHotkeyV2(normalizeSettings({ recordingHotkey: "alt+r" })), { hotkeyMigratedV2: true });
-  assert.equal(migrateHotkeyV2(normalizeSettings({ recordingHotkey: "ctrl+r", hotkeyMigratedV2: true })), undefined);
+  assert.deepEqual(migrateHotkeyV2(normalizeSettings({ recordingHotkey: "alt+r" })), {
+    hotkeyMigratedV2: true,
+  });
+  assert.equal(
+    migrateHotkeyV2(normalizeSettings({ recordingHotkey: "ctrl+r", hotkeyMigratedV2: true })),
+    undefined,
+  );
 });
 
 test("formatters stay stable", () => {
@@ -158,7 +192,7 @@ test("controller toggle records, transcribes and delivers", async () => {
     runtime,
     options: {},
     getSettings: () => normalizeSettings({}),
-    toast: (m, v = "info") => toasts.push([m, v]),
+    toast: (m, v = "info") => toasts.push([null, v]),
     deliver: async (text, submit) => delivered.push([text, submit]),
     onSetupError: () => assert.fail("no setup error expected"),
     ready: readyStub,
@@ -167,7 +201,7 @@ test("controller toggle records, transcribes and delivers", async () => {
   assert.equal(runtime.recording, true);
   await c.toggle(false);
   assert.deepEqual(delivered, [["hello world", false]]);
-  assert.ok(toasts.some(([m, v]) => v === "success"));
+  assert.ok(toasts.some(([, v]) => v === "success"));
 });
 
 test("controller guards concurrent transcription", async () => {
@@ -178,13 +212,13 @@ test("controller guards concurrent transcription", async () => {
     runtime,
     options: {},
     getSettings: () => normalizeSettings({}),
-    toast: (m, v = "info") => toasts.push([m, v]),
+    toast: (m, v = "info") => toasts.push([null, v]),
     deliver: async () => assert.fail("must not deliver"),
     onSetupError: () => {},
     ready: readyStub,
   });
   await c.toggle(false);
-  assert.ok(toasts.some(([m, v]) => v === "warning"));
+  assert.ok(toasts.some(([, v]) => v === "warning"));
 });
 
 test("controller cancel stops runtime", () => {
@@ -306,7 +340,9 @@ test("clipboard failure shows error and falls back to dialog", async () => {
       ready: readyStub,
       clipboard: {
         copyText: async () => {
-          throw new Error("No clipboard tool worked (tried wl-copy). Install wl-clipboard package.");
+          throw new Error(
+            "No clipboard tool worked (tried wl-copy). Install wl-clipboard package.",
+          );
         },
       },
     },
@@ -358,13 +394,22 @@ test("clipboard picks platform tools with fallback", async () => {
     },
   });
   assert.equal(r.method, "xsel");
-  await assert.rejects(() => copyText("hi", { platform: "linux", wayland: false, run: fail }), /No clipboard tool worked/);
+  await assert.rejects(
+    () => copyText("hi", { platform: "linux", wayland: false, run: fail }),
+    /No clipboard tool worked/,
+  );
 });
 
 test("transcription settings toggle autoSubmit", async () => {
   const store = mockStore({});
   const dialog = mockDialog({ select: ["autoSubmit", undefined, undefined] });
-  const d = { dialog: dialog.api, toast: () => {}, options: {}, getSettings: () => store.state, update: store.update };
+  const d = {
+    dialog: dialog.api,
+    toast: () => {},
+    options: {},
+    getSettings: () => store.state,
+    update: store.update,
+  };
   await showTranscriptionSettings(d);
   assert.equal(store.state.autoSubmit, true);
 });
@@ -372,7 +417,13 @@ test("transcription settings toggle autoSubmit", async () => {
 test("language picker custom code path", async () => {
   const store = mockStore({});
   const dialog = mockDialog({ select: ["__custom", undefined], prompt: ["de"] });
-  const d = { dialog: dialog.api, toast: () => {}, options: {}, getSettings: () => store.state, update: store.update };
+  const d = {
+    dialog: dialog.api,
+    toast: () => {},
+    options: {},
+    getSettings: () => store.state,
+    update: store.update,
+  };
   await showLanguagePicker(d);
   assert.equal(store.state.language, "de");
 });
@@ -380,7 +431,13 @@ test("language picker custom code path", async () => {
 test("recording hotkey preset updates store", async () => {
   const store = mockStore({});
   const dialog = mockDialog({ select: ["key", "alt+r", undefined, undefined] });
-  const d = { dialog: dialog.api, toast: () => {}, options: {}, getSettings: () => store.state, update: store.update };
+  const d = {
+    dialog: dialog.api,
+    toast: () => {},
+    options: {},
+    getSettings: () => store.state,
+    update: store.update,
+  };
   await showRecordingSettings(d);
   assert.equal(store.state.recordingHotkey, "alt+r");
 });
@@ -389,7 +446,13 @@ test("model picker options fit narrow dialog", async () => {
   const store = mockStore({});
   const toasts = [];
   const dialog = mockDialog({ select: ["__skip"] });
-  const d = { dialog: dialog.api, toast: (m) => toasts.push(m), options: {}, getSettings: () => store.state, update: store.update };
+  const d = {
+    dialog: dialog.api,
+    toast: (m) => toasts.push(m),
+    options: {},
+    getSettings: () => store.state,
+    update: store.update,
+  };
   await showModelPicker(d, true);
   const picker = dialog.log.selectArgs[0];
   assert.ok(picker.options.length > 10);

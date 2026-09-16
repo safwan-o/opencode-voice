@@ -71,7 +71,7 @@ function harness(runtime, extra = {}) {
     runtime,
     options: {},
     getSettings: () => normalizeSettings({}),
-    toast: (m, v = "info") => toasts.push([m, v]),
+    toast: (m, v = "info") => toasts.push([null, v]),
     deliver: async (text, submit) => delivered.push([text, submit]),
     onSetupError: () => {},
     ready: readyStub,
@@ -186,7 +186,7 @@ test("stop failure keeps recording; next press completes it", async () => {
   await finishing;
   assert.equal(rt.transcribes, 0);
   assert.deepEqual(delivered, []);
-  assert.ok(toasts.some(([m, v]) => v === "error"));
+  assert.ok(toasts.some(([, v]) => v === "error"));
   assert.equal(rt.recording, true);
   rt.stopError = null;
   await c.toggle(false);
@@ -204,7 +204,7 @@ test("transcribe failure toasts, delivers nothing, recovers", async () => {
   rt.releaseStop();
   await finishing;
   assert.deepEqual(delivered, []);
-  assert.ok(toasts.some(([m, v]) => v === "error"));
+  assert.ok(toasts.some(([, v]) => v === "error"));
   rt.transcribeError = null;
   rt.transcribing = false;
   await c.toggle(false);
@@ -218,7 +218,7 @@ test("deliver failure surfaces error toast, no crash", async () => {
     runtime: rt,
     options: {},
     getSettings: () => normalizeSettings({}),
-    toast: (m, v = "info") => toasts.push([m, v]),
+    toast: (m, v = "info") => toasts.push([null, v]),
     deliver: async () => {
       throw new Error("session gone");
     },
@@ -230,7 +230,7 @@ test("deliver failure surfaces error toast, no crash", async () => {
   await Promise.resolve();
   rt.releaseStop();
   await finishing;
-  assert.ok(toasts.some(([m, v]) => v === "error"));
+  assert.ok(toasts.some(([, v]) => v === "error"));
 });
 
 test("cancel during recording allows fresh start", async () => {
@@ -264,10 +264,15 @@ test("prepare failure calls onSetupError and never starts", async () => {
     runtime: rt,
     options: {},
     getSettings: () => normalizeSettings({}),
-    toast: (m, v = "info") => toasts.push([m, v]),
+    toast: (m, v = "info") => toasts.push([null, v]),
     deliver: async () => {},
     onSetupError: (t, e) => setupErrors.push([t, e]),
-    ready: { ...readyStub, ensureEngineReady: async () => { throw new Error("no network"); } },
+    ready: {
+      ...readyStub,
+      ensureEngineReady: async () => {
+        throw new Error("no network");
+      },
+    },
   });
   await c.toggle(false);
   assert.equal(setupErrors.length, 1);
@@ -280,7 +285,7 @@ test("start failure toasts and allows retry", async () => {
   rt.startError = new Error("no microphone");
   const { c, toasts } = harness(rt);
   await c.toggle(false);
-  assert.ok(toasts.some(([m, v]) => v === "error"));
+  assert.ok(toasts.some(([, v]) => v === "error"));
   assert.equal(rt.recording, false);
   rt.startError = null;
   await c.toggle(false);
@@ -306,5 +311,5 @@ test("direct stopAndTranscribe while busy warns only", async () => {
   const { c, toasts } = harness(rt);
   await c.stopAndTranscribe(false);
   assert.equal(rt.transcribes, 0);
-  assert.ok(toasts.some(([m, v]) => v === "warning"));
+  assert.ok(toasts.some(([, v]) => v === "warning"));
 });

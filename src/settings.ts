@@ -26,15 +26,18 @@ export type SettingsUpdate = (mutation: (draft: VoiceSettings) => void) => Promi
 export function normalizeSettings(raw: Partial<VoiceSettings> = {}): VoiceSettings {
   const settings: VoiceSettings = { ...DEFAULT_SETTINGS, ...raw } as VoiceSettings;
   if (!getModel(settings.model)?.implemented) settings.model = DEFAULT_SETTINGS.model;
-  settings.recordingHotkey = String(settings.recordingHotkey || V2_DEFAULT_HOTKEY).trim() || V2_DEFAULT_HOTKEY;
+  settings.recordingHotkey =
+    String(settings.recordingHotkey || V2_DEFAULT_HOTKEY).trim() || V2_DEFAULT_HOTKEY;
   settings.language = String(settings.language || "auto").trim() || "auto";
   settings.mic = String(settings.mic || "").trim();
   settings.downloadDir = String(settings.downloadDir || "").trim();
   settings.autoSubmit = Boolean(settings.autoSubmit);
   settings.onboardingDone = Boolean(settings.onboardingDone);
   settings.setupSkipped = Boolean(settings.setupSkipped);
-  settings.voiceEnhance = (settings as Record<string, unknown>).voiceEnhance !== false;
-  settings.cleanupCutoffHz = normalizeCutoffHz((settings as Record<string, unknown>).cleanupCutoffHz);
+  settings.voiceEnhance = (settings as unknown as Record<string, unknown>).voiceEnhance !== false;
+  settings.cleanupCutoffHz = normalizeCutoffHz(
+    (settings as unknown as Record<string, unknown>).cleanupCutoffHz,
+  );
   return settings;
 }
 
@@ -42,7 +45,10 @@ export function normalizeSettings(raw: Partial<VoiceSettings> = {}): VoiceSettin
  * V1 stored separate hold/toggle keys; V2 keeps one `recordingHotkey`.
  * Preserves an explicit legacy hold key, else the old toggle key.
  */
-export function mergeLegacyHotkey(current: Partial<VoiceSettings>, legacy: { hotkey?: unknown; toggleHotkey?: unknown }): Partial<VoiceSettings> {
+export function mergeLegacyHotkey(
+  current: Partial<VoiceSettings>,
+  legacy: { hotkey?: unknown; toggleHotkey?: unknown },
+): Partial<VoiceSettings> {
   if (current.recordingHotkey) return current;
   const hold = String(legacy.hotkey ?? "").trim();
   const toggle = String(legacy.toggleHotkey ?? "").trim();
@@ -59,7 +65,16 @@ export function migrateHotkeyV2(settings: VoiceSettings): Partial<VoiceSettings>
 /** Options passed via cli.json act as initial overrides (first run only). */
 export function optionsOverlay(options: Record<string, unknown> = {}): Partial<VoiceSettings> {
   const overlay: Partial<VoiceSettings> = {};
-  for (const key of ["recordingHotkey", "model", "language", "mic", "autoSubmit", "downloadDir", "voiceEnhance", "cleanupCutoffHz"] as const) {
+  for (const key of [
+    "recordingHotkey",
+    "model",
+    "language",
+    "mic",
+    "autoSubmit",
+    "downloadDir",
+    "voiceEnhance",
+    "cleanupCutoffHz",
+  ] as const) {
     if (options[key] !== undefined) (overlay as Record<string, unknown>)[key] = options[key];
   }
   return overlay;

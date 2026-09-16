@@ -2,7 +2,12 @@ import { Plugin } from "@opencode/plugin/tui";
 import { VoiceRuntime } from "../lib/engine.js";
 import { DEFAULT_SETTINGS } from "../lib/models.js";
 import { copyText } from "./clipboard.ts";
-import { showError, showModelPicker, showSettings, shouldShowStartupModelPicker } from "./dialogs.ts";
+import {
+  showError,
+  showModelPicker,
+  showSettings,
+  shouldShowStartupModelPicker,
+} from "./dialogs.ts";
 import { normalizeSettings, migrateHotkeyV2, optionsOverlay } from "./settings.ts";
 import { createVoiceController } from "./voice.ts";
 
@@ -10,15 +15,22 @@ export default Plugin.define({
   id: "opencode-voice",
   setup(ctx) {
     const createRuntime =
-      (ctx.options?.createRuntime as ((options: Record<string, unknown>) => VoiceRuntime) | undefined) ??
-      ((o: Record<string, unknown>) => new VoiceRuntime(o));
+      (ctx.options?.createRuntime as
+        | ((options: Record<string, unknown>) => VoiceRuntime)
+        | undefined) ?? ((o: Record<string, unknown>) => new VoiceRuntime(o));
     const runtime = createRuntime((ctx.options ?? {}) as Record<string, unknown>);
 
     const [store, updateStore] = ctx.storage.store("settings", {
-      initial: { ...DEFAULT_SETTINGS, ...optionsOverlay((ctx.options ?? {}) as Record<string, unknown>) },
+      initial: {
+        ...DEFAULT_SETTINGS,
+        ...optionsOverlay((ctx.options ?? {}) as Record<string, unknown>),
+      },
     });
-    const getSettings = () => normalizeSettings(store as unknown as Parameters<typeof normalizeSettings>[0]);
-    const update = async (fn: (draft: Parameters<Parameters<typeof updateStore>[0]>[0]) => void) => {
+    const getSettings = () =>
+      normalizeSettings(store as unknown as Parameters<typeof normalizeSettings>[0]);
+    const update = async (
+      fn: (draft: Parameters<Parameters<typeof updateStore>[0]>[0]) => void,
+    ) => {
       await updateStore(fn as Parameters<typeof updateStore>[0]);
     };
 
@@ -27,12 +39,18 @@ export default Plugin.define({
 
     // One-time: move installs off the old ctrl+r default (session rename owns it).
     {
-      const migration = migrateHotkeyV2(normalizeSettings(store as unknown as Parameters<typeof normalizeSettings>[0]));
+      const migration = migrateHotkeyV2(
+        normalizeSettings(store as unknown as Parameters<typeof normalizeSettings>[0]),
+      );
       if (migration && migration.recordingHotkey) {
         const patch = migration;
         void updateStore((draft) => {
           Object.assign(draft, patch);
-        }).then(() => notify("Voice record key moved to ctrl+space (ctrl+r is session rename). Change it in /voice-settings."));
+        }).then(() =>
+          notify(
+            "Voice record key moved to ctrl+space (ctrl+r is session rename). Change it in /voice-settings.",
+          ),
+        );
       } else if (migration) {
         const patch = migration;
         void updateStore((draft) => {
@@ -55,9 +73,9 @@ export default Plugin.define({
     };
 
     // Test seam: ctx.options.clipboard overrides the OS clipboard writer.
-    const clipboard = (
-      (ctx.options ?? {}) as Record<string, unknown>
-    ).clipboard as { copyText?: typeof copyText } | undefined;
+    const clipboard = ((ctx.options ?? {}) as Record<string, unknown>).clipboard as
+      | { copyText?: typeof copyText }
+      | undefined;
     const copy = clipboard?.copyText ?? copyText;
     // No composer-append API exists in V2: OFF copies to the OS clipboard
     // (user pastes where they want), ON submits immediately.
@@ -95,7 +113,9 @@ export default Plugin.define({
       deliver,
       onSetupError: (title, error) => void showError(deps, title, error),
       // Test seam: ctx.options.ready overrides lib-backed readiness checks.
-      ready: ((ctx.options ?? {}) as Record<string, unknown>).ready as Parameters<typeof createVoiceController>[0]["ready"],
+      ready: ((ctx.options ?? {}) as Record<string, unknown>).ready as Parameters<
+        typeof createVoiceController
+      >[0]["ready"],
     });
 
     const openSettings = () => void showSettings(deps);
@@ -111,45 +131,45 @@ export default Plugin.define({
             mode: "global",
             priority: 100,
             commands: [
-          {
-            id: "voice.record",
-            title: "Voice: record",
-            description: "Toggle local voice recording and submit transcription.",
-            group: "Voice",
-            bind: settings.recordingHotkey || false,
-            palette: true as const,
-            slash: { name: "voice", aliases: ["voice-record"] },
-            run: () => controller.toggle(false),
-          },
-          {
-            id: "voice.submit",
-            title: "Voice: submit",
-            description: "Toggle local voice recording and submit after transcription.",
-            group: "Voice",
-            palette: true as const,
-            slash: { name: "voice-submit" },
-            run: () => controller.toggle(true),
-          },
-          {
-            id: "voice.stop",
-            title: "Voice: stop",
-            description: "Cancel active voice recording or transcription.",
-            group: "Voice",
-            palette: true as const,
-            slash: { name: "voice-stop" },
-            run: () => controller.cancel(),
-          },
-          {
-            id: "voice.settings",
-            title: "Voice: settings",
-            description: "Open local voice input settings.",
-            group: "Voice",
-            palette: true as const,
-            slash: { name: "voice-settings" },
-            run: openSettings,
-          },
-        ],
-        bindings: ["voice.record"],
+              {
+                id: "voice.record",
+                title: "Voice: record",
+                description: "Toggle local voice recording and submit transcription.",
+                group: "Voice",
+                bind: settings.recordingHotkey || false,
+                palette: true as const,
+                slash: { name: "voice", aliases: ["voice-record"] },
+                run: () => controller.toggle(false),
+              },
+              {
+                id: "voice.submit",
+                title: "Voice: submit",
+                description: "Toggle local voice recording and submit after transcription.",
+                group: "Voice",
+                palette: true as const,
+                slash: { name: "voice-submit" },
+                run: () => controller.toggle(true),
+              },
+              {
+                id: "voice.stop",
+                title: "Voice: stop",
+                description: "Cancel active voice recording or transcription.",
+                group: "Voice",
+                palette: true as const,
+                slash: { name: "voice-stop" },
+                run: () => controller.cancel(),
+              },
+              {
+                id: "voice.settings",
+                title: "Voice: settings",
+                description: "Open local voice input settings.",
+                group: "Voice",
+                palette: true as const,
+                slash: { name: "voice-settings" },
+                run: openSettings,
+              },
+            ],
+            bindings: ["voice.record"],
           };
         });
         return null;
