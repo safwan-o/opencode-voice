@@ -9,8 +9,5 @@
     "strict": false,
     "skipLibCheck": true
   },
-  "include": [
-    "src/**/*.ts",
-    "test/**/*.js"
-  ]
+  "include": ["src/**/*.ts", "test/**/*.js"]
 }
