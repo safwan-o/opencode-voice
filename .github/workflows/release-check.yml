@@ -10,8 +10,12 @@ permissions:
 
 jobs:
   check:
-    name: Check and pack
+    name: Check and pack (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 24]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,10 +23,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node }}
 
       - name: Syntax check
         run: npm run check
+
+      - name: Coverage signal (informational, no threshold yet)
+        run: npx --yes c8@latest --reporter=text node --test
 
       - name: Pack dry run
         run: npm pack --dry-run
