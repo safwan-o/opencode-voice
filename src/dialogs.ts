@@ -1,14 +1,26 @@
 import { listMicrophones, resolveCommand } from "../lib/engine.js";
 import { getEngineStatus, importManagedEngine, removeManagedEngine } from "../lib/engines.js";
-import { formatSize, getCacheDir, getModel, getModelPath, isModelDownloaded, isModelFilePresent, MODELS } from "../lib/models.js";
-import { ensureDownloaded, ensureEngineReady, ensureRecorderReady, type ToastFn } from "./ensure.ts";
+import {
+  formatSize,
+  getCacheDir,
+  getModel,
+  getModelPath,
+  isModelDownloaded,
+  isModelFilePresent,
+  MODELS,
+} from "../lib/models.js";
+import { ensureDownloaded, ensureEngineReady, type ToastFn } from "./ensure.ts";
 import { WHISPER_LANGUAGES } from "./languages.ts";
 import { normalizeSettings, type SettingsUpdate, type VoiceSettings } from "./settings.ts";
 
 export interface DialogApi {
   alert(options: { title: string; message: string }): Promise<void>;
   confirm(options: { title: string; message: string }): Promise<boolean | undefined>;
-  prompt(options: { title: string; placeholder?: string; value?: string }): Promise<string | undefined>;
+  prompt(options: {
+    title: string;
+    placeholder?: string;
+    value?: string;
+  }): Promise<string | undefined>;
   select<Value>(options: {
     title: string;
     placeholder?: string;
@@ -38,15 +50,24 @@ function settingsOf(d: D): VoiceSettings {
   return normalizeSettings(d.getSettings());
 }
 
-async function set(d: D, name: keyof VoiceSettings, value: VoiceSettings[keyof VoiceSettings]): Promise<void> {
+async function set(
+  d: D,
+  name: keyof VoiceSettings,
+  value: VoiceSettings[keyof VoiceSettings],
+): Promise<void> {
   await d.update((draft) => {
     (draft as unknown as Record<string, unknown>)[name as string] = value;
   });
 }
 
-function modelStatusText(model: ReturnType<typeof getModel>, options: Record<string, unknown>, settings: VoiceSettings): string {
+function modelStatusText(
+  model: ReturnType<typeof getModel>,
+  options: Record<string, unknown>,
+  settings: VoiceSettings,
+): string {
   if (!model.implemented) return "planned";
-  if (isModelFilePresent(model, options, settings) && !isModelDownloaded(model, options, settings)) return "needs verification";
+  if (isModelFilePresent(model, options, settings) && !isModelDownloaded(model, options, settings))
+    return "needs verification";
   return isModelDownloaded(model, options, settings) ? "downloaded" : "download";
 }
 
@@ -83,7 +104,14 @@ export async function showModelPicker(d: D, firstRun = false): Promise<void> {
         };
       }),
       ...(firstRun
-        ? [{ title: "Skip setup for now", value: "__skip", category: "Setup", description: "You can open this again with /voice-settings." }]
+        ? [
+            {
+              title: "Skip setup for now",
+              value: "__skip",
+              category: "Setup",
+              description: "You can open this again with /voice-settings.",
+            },
+          ]
         : []),
     ],
   });
@@ -112,7 +140,10 @@ export async function showModelPicker(d: D, firstRun = false): Promise<void> {
 export function shouldShowStartupModelPicker(d: D): boolean {
   const settings = settingsOf(d);
   const model = getModel(settings.model);
-  return !settings.onboardingDone || (!settings.setupSkipped && !isModelDownloaded(model, d.options, settings));
+  return (
+    !settings.onboardingDone ||
+    (!settings.setupSkipped && !isModelDownloaded(model, d.options, settings))
+  );
 }
 
 export async function showLanguagePicker(d: D): Promise<void> {
@@ -123,7 +154,11 @@ export async function showLanguagePicker(d: D): Promise<void> {
     options: [
       { title: "Auto detect", value: "auto", description: "Let Whisper detect the language." },
       ...WHISPER_LANGUAGES.map(([name, code]) => ({ title: name, value: code })),
-      { title: "Custom code", value: "__custom", description: "Enter a Whisper language code manually." },
+      {
+        title: "Custom code",
+        value: "__custom",
+        description: "Enter a Whisper language code manually.",
+      },
     ],
   });
   if (picked === undefined) return showTranscriptionSettings(d);
@@ -143,8 +178,15 @@ export async function showLanguagePicker(d: D): Promise<void> {
 
 export async function showMicrophonePicker(d: D): Promise<void> {
   const settings = settingsOf(d);
-  const commandOptions = { ...d.options, downloadDir: settings.downloadDir, skipFfmpegStaticInstall: true };
-  const placeholder = process.platform === "win32" ? "default, audio=default, \"Microphone (Name)\"" : "default, hw:0,0, pulse, :0, ...";
+  const commandOptions = {
+    ...d.options,
+    downloadDir: settings.downloadDir,
+    skipFfmpegStaticInstall: true,
+  };
+  const placeholder =
+    process.platform === "win32"
+      ? 'default, audio=default, "Microphone (Name)"'
+      : "default, hw:0,0, pulse, :0, ...";
   const devices = listMicrophones(commandOptions);
   const picked = await d.dialog.select({
     title: "Voice microphone",
@@ -152,12 +194,20 @@ export async function showMicrophonePicker(d: D): Promise<void> {
     options: [
       { title: "System default", value: "", description: "Use the default input device." },
       ...devices.map((device) => ({ title: device, value: device })),
-      { title: "Custom device", value: "__custom", description: "Enter ffmpeg/arecord device manually." },
+      {
+        title: "Custom device",
+        value: "__custom",
+        description: "Enter ffmpeg/arecord device manually.",
+      },
     ],
   });
   if (picked === undefined) return showSystemSettings(d);
   if (picked === "__custom") {
-    const value = await d.dialog.prompt({ title: "Custom microphone device", placeholder, value: settings.mic });
+    const value = await d.dialog.prompt({
+      title: "Custom microphone device",
+      placeholder,
+      value: settings.mic,
+    });
     if (value === undefined) return showMicrophonePicker(d);
     await set(d, "mic", value.trim());
     return showSettings(d);
@@ -170,18 +220,32 @@ export async function showRecordingHotkeyPicker(d: D): Promise<void> {
   const settings = settingsOf(d);
   const presets = [
     { title: "Ctrl + Space", value: "ctrl+space", description: "Start and stop recording." },
-    { title: "Ctrl + R", value: "ctrl+r", description: "Start and stop recording (clashes with session rename)." },
+    {
+      title: "Ctrl + R",
+      value: "ctrl+r",
+      description: "Start and stop recording (clashes with session rename).",
+    },
     { title: "Alt + R", value: "alt+r", description: "Start and stop recording." },
-    { title: "Custom hotkey", value: "__custom", description: "Enter another OpenCode keybinding." },
+    {
+      title: "Custom hotkey",
+      value: "__custom",
+      description: "Enter another OpenCode keybinding.",
+    },
   ];
   const picked = await d.dialog.select({
     title: "Record key",
-    current: presets.some((p) => p.value === settings.recordingHotkey) ? settings.recordingHotkey : "__custom",
+    current: presets.some((p) => p.value === settings.recordingHotkey)
+      ? settings.recordingHotkey
+      : "__custom",
     options: presets,
   });
   if (picked === undefined) return showRecordingSettings(d);
   if (picked === "__custom") {
-    const value = await d.dialog.prompt({ title: "Custom recording key", placeholder: "alt+shift+r", value: settings.recordingHotkey });
+    const value = await d.dialog.prompt({
+      title: "Custom recording key",
+      placeholder: "alt+shift+r",
+      value: settings.recordingHotkey,
+    });
     if (value === undefined) return showRecordingHotkeyPicker(d);
     // Keymap layer is reactive: it re-reads the store, no manual re-register.
     await set(d, "recordingHotkey", value.trim() || settings.recordingHotkey);
@@ -194,7 +258,11 @@ export async function showRecordingHotkeyPicker(d: D): Promise<void> {
 export async function showDiagnostics(d: D): Promise<void> {
   const settings = settingsOf(d);
   const model = getModel(settings.model);
-  const commandOptions = { ...d.options, downloadDir: settings.downloadDir, skipFfmpegStaticInstall: true };
+  const commandOptions = {
+    ...d.options,
+    downloadDir: settings.downloadDir,
+    skipFfmpegStaticInstall: true,
+  };
   const lines = [
     `Platform: ${process.platform}-${process.arch}`,
     `Recorder: ffmpeg=${resolveCommand("ffmpeg", commandOptions) ? "yes" : "no"}, arecord=${resolveCommand("arecord", commandOptions) ? "yes" : "no"}, sox=${resolveCommand("sox", commandOptions) ? "yes" : "no"}`,
@@ -207,7 +275,10 @@ export async function showDiagnostics(d: D): Promise<void> {
   return showSettings(d);
 }
 
-export async function showEngineManager(d: D, engineId = getModel(settingsOf(d).model).engine): Promise<void> {
+export async function showEngineManager(
+  d: D,
+  engineId = getModel(settingsOf(d).model).engine,
+): Promise<void> {
   const settings = settingsOf(d);
   const status = getEngineStatus(engineId, d.options, settings);
   const canImport = Boolean(status.resolvedBinary && status.source !== "managed");
@@ -220,14 +291,22 @@ export async function showEngineManager(d: D, engineId = getModel(settingsOf(d).
         description: canImport ? status.resolvedBinary : `No external ${status.command} detected`,
         disabled: !canImport,
       },
-      { title: `Install managed ${engineId}`, value: "install", description: "Download the matching native engine from GitHub Releases." },
+      {
+        title: `Install managed ${engineId}`,
+        value: "install",
+        description: "Download the matching native engine from GitHub Releases.",
+      },
       {
         title: "Remove managed engine",
         value: "remove",
         description: status.managedInstalled ? status.managedBinary : "No managed engine installed",
         disabled: !status.managedInstalled,
       },
-      { title: "Diagnostics", value: "diagnostics", description: "Show recorder, model, and engine paths." },
+      {
+        title: "Diagnostics",
+        value: "diagnostics",
+        description: "Show recorder, model, and engine paths.",
+      },
       { title: "Back", value: "back" },
     ],
   });
@@ -235,7 +314,12 @@ export async function showEngineManager(d: D, engineId = getModel(settingsOf(d).
   if (picked === "diagnostics") return showDiagnostics(d);
   if (picked === "import") {
     try {
-      const result = await importManagedEngine(engineId, status.resolvedBinary as string, d.options, settings);
+      const result = await importManagedEngine(
+        engineId,
+        status.resolvedBinary as string,
+        d.options,
+        settings,
+      );
       d.toast(`Managed engine imported: ${result.managedBinary}`, "success");
       return showEngineManager(d, engineId);
     } catch (error) {
@@ -244,14 +328,19 @@ export async function showEngineManager(d: D, engineId = getModel(settingsOf(d).
   }
   if (picked === "install") {
     try {
-      await ensureEngineReady({ options: d.options, settings, toast: d.toast }, { engine: engineId } as ReturnType<typeof getModel>);
+      await ensureEngineReady({ options: d.options, settings, toast: d.toast }, {
+        engine: engineId,
+      } as ReturnType<typeof getModel>);
       return showEngineManager(d, engineId);
     } catch (error) {
       return showError(d, "Engine install failed", error);
     }
   }
   if (picked === "remove") {
-    const ok = await d.dialog.confirm({ title: "Remove managed engine?", message: status.managedBinary });
+    const ok = await d.dialog.confirm({
+      title: "Remove managed engine?",
+      message: status.managedBinary,
+    });
     if (!ok) return showEngineManager(d, engineId);
     try {
       await removeManagedEngine(engineId, d.options, settings);
@@ -269,15 +358,31 @@ export async function showRecordingSettings(d: D): Promise<void> {
     title: "Recording",
     options: [
       { title: "Record key", value: "key", description: settings.recordingHotkey || "not set" },
-      { title: "Voice cleanup", value: "cleanup", description: settings.voiceEnhance ? "enabled" : "disabled" },
+      {
+        title: "Voice cleanup",
+        value: "cleanup",
+        description: settings.voiceEnhance ? "enabled" : "disabled",
+      },
       {
         title: "Rumble filter",
         value: "cutoff",
-        description: settings.voiceEnhance ? `${settings.cleanupCutoffHz} Hz` : "off (cleanup disabled)",
+        description: settings.voiceEnhance
+          ? `${settings.cleanupCutoffHz} Hz`
+          : "off (cleanup disabled)",
         disabled: !settings.voiceEnhance,
       },
-      { title: "Toggle recording", value: "toggle", description: "Press once to start and again to transcribe.", disabled: true },
-      { title: "Hold to talk", value: "hold", description: "Unavailable until OpenCode provides key-release events.", disabled: true },
+      {
+        title: "Toggle recording",
+        value: "toggle",
+        description: "Press once to start and again to transcribe.",
+        disabled: true,
+      },
+      {
+        title: "Hold to talk",
+        value: "hold",
+        description: "Unavailable until OpenCode provides key-release events.",
+        disabled: true,
+      },
     ],
   });
   if (picked === undefined) return showSettings(d);
@@ -300,12 +405,18 @@ export async function showCutoffPicker(d: D): Promise<void> {
   ];
   const picked = await d.dialog.select({
     title: "Rumble filter cutoff",
-    current: presets.some((p) => p.value === String(settings.cleanupCutoffHz)) ? String(settings.cleanupCutoffHz) : "__custom",
+    current: presets.some((p) => p.value === String(settings.cleanupCutoffHz))
+      ? String(settings.cleanupCutoffHz)
+      : "__custom",
     options: presets,
   });
   if (picked === undefined) return showRecordingSettings(d);
   if (picked === "__custom") {
-    const value = await d.dialog.prompt({ title: "Custom cutoff frequency", placeholder: "120", value: String(settings.cleanupCutoffHz) });
+    const value = await d.dialog.prompt({
+      title: "Custom cutoff frequency",
+      placeholder: "120",
+      value: String(settings.cleanupCutoffHz),
+    });
     if (value === undefined) return showCutoffPicker(d);
     const parsed = Number(String(value).trim());
     if (!Number.isFinite(parsed) || parsed < 40 || parsed > 500) {
@@ -326,10 +437,26 @@ export async function showTranscriptionSettings(d: D): Promise<void> {
   const picked = await d.dialog.select({
     title: "Transcription",
     options: [
-      { title: "Model", value: "model", description: `${model.name} · ${downloaded ? "ready" : "not downloaded"}` },
-      { title: downloaded ? "Re-download model" : "Download model", value: "download", description: `${model.name} · ${formatSize(model)}` },
-      { title: "Language", value: "language", description: settings.language === "auto" ? "auto detect" : settings.language },
-      { title: "Auto-submit", value: "autoSubmit", description: settings.autoSubmit ? "enabled" : "disabled" },
+      {
+        title: "Model",
+        value: "model",
+        description: `${model.name} · ${downloaded ? "ready" : "not downloaded"}`,
+      },
+      {
+        title: downloaded ? "Re-download model" : "Download model",
+        value: "download",
+        description: `${model.name} · ${formatSize(model)}`,
+      },
+      {
+        title: "Language",
+        value: "language",
+        description: settings.language === "auto" ? "auto detect" : settings.language,
+      },
+      {
+        title: "Auto-submit",
+        value: "autoSubmit",
+        description: settings.autoSubmit ? "enabled" : "disabled",
+      },
     ],
   });
   if (picked === undefined) return showSettings(d);
@@ -358,16 +485,36 @@ export async function showSystemSettings(d: D): Promise<void> {
     title: "Audio and system",
     options: [
       { title: "Microphone", value: "mic", description: settings.mic || "system default" },
-      { title: "Download directory", value: "downloadDir", description: settings.downloadDir || getCacheDir(d.options, settings) },
-      { title: "Native engine", value: "engine", description: `${getEngineStatus(model.engine, d.options, settings).source} · ${model.engine}` },
-      { title: "Diagnostics", value: "diagnostics", description: "Check recorder, runtimes, and model paths." },
-      { title: "Run setup again", value: "firstRun", description: "Open the first-run model picker." },
+      {
+        title: "Download directory",
+        value: "downloadDir",
+        description: settings.downloadDir || getCacheDir(d.options, settings),
+      },
+      {
+        title: "Native engine",
+        value: "engine",
+        description: `${getEngineStatus(model.engine, d.options, settings).source} · ${model.engine}`,
+      },
+      {
+        title: "Diagnostics",
+        value: "diagnostics",
+        description: "Check recorder, runtimes, and model paths.",
+      },
+      {
+        title: "Run setup again",
+        value: "firstRun",
+        description: "Open the first-run model picker.",
+      },
     ],
   });
   if (picked === undefined) return showSettings(d);
   if (picked === "mic") return showMicrophonePicker(d);
   if (picked === "downloadDir") {
-    const value = await d.dialog.prompt({ title: "Download directory", placeholder: "~/.cache/opencode-voice", value: settings.downloadDir });
+    const value = await d.dialog.prompt({
+      title: "Download directory",
+      placeholder: "~/.cache/opencode-voice",
+      value: settings.downloadDir,
+    });
     if (value === undefined) return showSystemSettings(d);
     await set(d, "downloadDir", value.trim());
     return showSystemSettings(d);
@@ -383,9 +530,21 @@ export async function showSettings(d: D): Promise<void> {
   const picked = await d.dialog.select({
     title: "Voice settings",
     options: [
-      { title: "Recording", value: "recording", description: `${settings.recordingHotkey} · toggle` },
-      { title: "Transcription", value: "transcription", description: `${model.name} · ${settings.language === "auto" ? "auto language" : settings.language}` },
-      { title: "Audio and system", value: "system", description: `${settings.mic || "default microphone"} · ${model.engine}` },
+      {
+        title: "Recording",
+        value: "recording",
+        description: `${settings.recordingHotkey} · toggle`,
+      },
+      {
+        title: "Transcription",
+        value: "transcription",
+        description: `${model.name} · ${settings.language === "auto" ? "auto language" : settings.language}`,
+      },
+      {
+        title: "Audio and system",
+        value: "system",
+        description: `${settings.mic || "default microphone"} · ${model.engine}`,
+      },
     ],
   });
   if (picked === undefined) return;

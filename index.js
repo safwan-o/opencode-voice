@@ -42,7 +42,6 @@ function writeSetting(kv, name, value) {
 function migrateSettings(kv) {
   // Early builds stored separate hold and toggle keys. Preserve the user's
   // explicit hold key first, otherwise retain the old toggle binding.
-  const holdHotkey = kv.get(KV.hotkey, undefined);
   if (!kv.get(KV.recordingHotkey, undefined)) {
     const configuredHotkey = String(kv.get(KV.hotkey, "")).trim();
     kv.set(KV.recordingHotkey, configuredHotkey || kv.get(KV.toggleHotkey, DEFAULT_SETTINGS.recordingHotkey));

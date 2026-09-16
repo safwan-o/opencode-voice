@@ -32,6 +32,9 @@ test("cutoff clamps to the voice-safe band", () => {
 });
 
 test("constants stay in voice-safe bands", () => {
-  assert.ok(ENHANCE.highpassFreq >= 80 && ENHANCE.highpassFreq <= 200, `highpass ${ENHANCE.highpassFreq}`);
+  assert.ok(
+    ENHANCE.highpassFreq >= 80 && ENHANCE.highpassFreq <= 200,
+    `highpass ${ENHANCE.highpassFreq}`,
+  );
   assert.ok(ENHANCE.limiter === "alimiter=limit=0.95");
 });

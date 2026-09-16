@@ -80,7 +80,10 @@ test("transcribe without ffmpeg falls back to raw", { timeout: 180000 }, async (
   const rt = new VoiceRuntime({});
   const settings = { voiceEnhance: true, language: "auto", downloadDir: "", autoSubmit: false };
   await withCleanPath(async () => {
-    await assert.rejects(() => rt.transcribe("test/fixtures/rumble.wav", model, settings), /empty|not found|ENOENT/i);
+    await assert.rejects(
+      () => rt.transcribe("test/fixtures/rumble.wav", model, settings),
+      /empty|not found|ENOENT/i,
+    );
   })();
 });
 
@@ -112,14 +115,26 @@ test("transcribe with cleanup preserves clean speech", { timeout: 240000 }, asyn
       { cwd: dir, stdio: "pipe", timeout: 90000 },
     );
     execFileSync("ffmpeg", [
-      "-hide_banner", "-loglevel", "error", "-y",
-      "-i", path.join(dir, "tts.mp3"),
-      "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      path.join(dir, "tts.mp3"),
+      "-ar",
+      "16000",
+      "-ac",
+      "1",
+      "-c:a",
+      "pcm_s16le",
       path.join(dir, "speech.wav"),
     ]);
     const rt = new VoiceRuntime({});
     const base = { language: "auto", downloadDir: "", autoSubmit: false };
-    const text = await rt.transcribe(path.join(dir, "speech.wav"), model, { ...base, voiceEnhance: true });
+    const text = await rt.transcribe(path.join(dir, "speech.wav"), model, {
+      ...base,
+      voiceEnhance: true,
+    });
     // NOTE: moonshine systematically hears edge-tts "quick" as "click";
     // assert the stable remainder of the sentence.
     assert.match(text.toLowerCase(), /brown fox jumps over the lazy dog/);

@@ -1,5 +1,11 @@
 import { getModel, isModelDownloaded } from "../lib/models.js";
-import { ensureDownloaded, ensureEngineReady, ensureRecorderReady, type ToastFn, type VoiceRuntime } from "./ensure.ts";
+import {
+  ensureDownloaded,
+  ensureEngineReady,
+  ensureRecorderReady,
+  type ToastFn,
+  type VoiceRuntime,
+} from "./ensure.ts";
 import { normalizeSettings, type VoiceSettings } from "./settings.ts";
 
 export interface VoiceControllerDeps {
@@ -32,10 +38,16 @@ export function createVoiceController(deps: VoiceControllerDeps) {
   type Phase = "idle" | "starting" | "recording" | "stopping" | "transcribing";
   let phase: Phase = "idle";
 
-  async function prepare(): Promise<{ settings: VoiceSettings; model: ReturnType<typeof getModel> } | undefined> {
+  async function prepare(): Promise<
+    { settings: VoiceSettings; model: ReturnType<typeof getModel> } | undefined
+  > {
     const settings = normalizeSettings(deps.getSettings());
     const model = getModel(settings.model);
-    const downloaded = (ready.isModelDownloaded ?? isModelDownloaded)(model, deps.options, settings);
+    const downloaded = (ready.isModelDownloaded ?? isModelDownloaded)(
+      model,
+      deps.options,
+      settings,
+    );
     if (!downloaded) {
       try {
         const env = { options: deps.options, settings, toast: deps.toast };
@@ -73,7 +85,11 @@ export function createVoiceController(deps: VoiceControllerDeps) {
       deps.runtime.pendingSubmit = submit || state.settings.autoSubmit;
       await deps.runtime.start(state.settings);
       phase = "recording";
-      deps.toast(submit ? "Recording for submit. Run /voice-submit again to stop." : "Recording. Run /voice again to stop.");
+      deps.toast(
+        submit
+          ? "Recording for submit. Run /voice-submit again to stop."
+          : "Recording. Run /voice again to stop.",
+      );
     } catch (error) {
       phase = "idle";
       deps.toast(errText(error), "error");
@@ -110,7 +126,10 @@ export function createVoiceController(deps: VoiceControllerDeps) {
       deps.toast("Transcribing...");
       const text = await deps.runtime.transcribe(audioFile, model, settings);
       await deps.deliver(text, submit || settings.autoSubmit);
-      deps.toast(submit || settings.autoSubmit ? "Transcribed and submitted" : "Transcribed", "success");
+      deps.toast(
+        submit || settings.autoSubmit ? "Transcribed and submitted" : "Transcribed",
+        "success",
+      );
       phase = "idle";
     } catch (error) {
       // A failed stop() leaves the runtime recording, so go back to

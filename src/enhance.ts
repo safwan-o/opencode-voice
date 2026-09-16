@@ -8,7 +8,12 @@ import {
   normalizeCutoffHz,
 } from "../lib/enhance.js";
 
-export { ENHANCE_CUTOFF_MAX_HZ, ENHANCE_CUTOFF_MIN_HZ, ENHANCE_DEFAULT_CUTOFF_HZ, normalizeCutoffHz };
+export {
+  ENHANCE_CUTOFF_MAX_HZ,
+  ENHANCE_CUTOFF_MIN_HZ,
+  ENHANCE_DEFAULT_CUTOFF_HZ,
+  normalizeCutoffHz,
+};
 
 // UI-facing descriptor (kept for compatibility with existing tests/callers).
 export const ENHANCE = {

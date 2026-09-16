@@ -35,7 +35,8 @@ test("reader walks LIST chunks", () => {
   const file = path.join(dir, "a.wav");
   try {
     const pcm = Buffer.alloc(1600);
-    for (let i = 0; i < 800; i++) pcm.writeInt16LE(Math.round(5000 * Math.sin((2 * Math.PI * 440 * i) / 16000)), i * 2);
+    for (let i = 0; i < 800; i++)
+      pcm.writeInt16LE(Math.round(5000 * Math.sin((2 * Math.PI * 440 * i) / 16000)), i * 2);
     const fmt = Buffer.alloc(24);
     fmt.write("fmt ", 0);
     fmt.writeUInt32LE(16, 4);
