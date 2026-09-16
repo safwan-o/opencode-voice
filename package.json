@@ -43,10 +43,11 @@
     "LICENSE"
   ],
   "scripts": {
-    "check": "node --check index.js && node --check lib/models.js && node --check lib/handy-model-catalog.js && node --check lib/download.js && node --check lib/engine.js && node --check lib/engines.js && node --check lib/wav.js && node --check bin/opencode-voice.js && node --check scripts/package-engine-asset.mjs && node --check scripts/build-engine-registry.mjs && node --check scripts/update-handy-model-catalog.mjs && node --check scripts/gen-voice-fixtures.mjs && npm test",
+    "check": "npm run typecheck && node --check index.js && node --check lib/models.js && node --check lib/handy-model-catalog.js && node --check lib/download.js && node --check lib/engine.js && node --check lib/engines.js && node --check lib/wav.js && node --check bin/opencode-voice.js && node --check scripts/package-engine-asset.mjs && node --check scripts/build-engine-registry.mjs && node --check scripts/update-handy-model-catalog.mjs && node --check scripts/gen-voice-fixtures.mjs && npm test",
     "test": "node --test",
     "update-handy-model-catalog": "node scripts/update-handy-model-catalog.mjs",
-    "prepack": "npm run check"
+    "prepack": "npm run check",
+    "typecheck": "npx --yes -p typescript@^5 tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@opencode/plugin": "2.0.3",
@@ -77,5 +78,8 @@
   "engines": {
     "node": ">=20",
     "opencode": ">=1.17.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43"
   }
 }

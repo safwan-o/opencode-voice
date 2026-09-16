@@ -40,7 +40,7 @@ function settingsOf(d: D): VoiceSettings {
 
 async function set(d: D, name: keyof VoiceSettings, value: VoiceSettings[keyof VoiceSettings]): Promise<void> {
   await d.update((draft) => {
-    (draft as Record<string, unknown>)[name] = value;
+    (draft as unknown as Record<string, unknown>)[name as string] = value;
   });
 }
 
