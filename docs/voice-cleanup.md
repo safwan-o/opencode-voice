@@ -31,9 +31,12 @@ recognizer-relevant balance is fixed — see functional proof below).
 - Clean edge-tts reference: unchanged correct output (no-regression bar for Phase 4).
 
 ## Recorder insertion points (recon, `lib/engine.js`)
-- `buildRecorders(file, settings)` (:644): ffmpeg descriptors end with
-  `["-ac","1","-ar","16000", file]` — splice `["-af", chain]` before the final
-  `file` element for `command === ffmpegCommand` recorders only.
-- `settings` is already threaded through (no plumbing changes needed).
-- arecord/sox descriptors: skip + one-time toast (no filter support).
-- `formatCommand` (:588) is display-only (error messages pick the chain up free).
+- Filtering runs **pre-transcribe** inside `VoiceRuntime.transcribe()`, not at
+  record time: `arecord` is listed first on Linux (and present on this machine),
+  so a record-time `-af` would silently never fire for arecord captures.
+  Pre-transcribe covers every recorder backend with one code path.
+- `buildFilterChain({enabled, cutoffHz})` from `./enhance.js`; ffmpeg resolved
+  per call (missing binary or filter error → fall back to the raw file, never fail).
+- Filtered copy is `${audioFile}.${pid}.clean.wav`, always unlinked (timeout /
+  error / exit paths). `settings.voiceEnhance !== false` defaults ON for V1
+  callers; V2 store defaults live in `src/settings.ts`.

@@ -92,6 +92,41 @@ test("normalizeSettings applies V1 rules", () => {
   assert.equal(normalizeSettings({ model: "nope" }).model, "nope");
 });
 
+test("cleanup settings default on and normalize cutoff", () => {
+  const d = normalizeSettings({});
+  assert.equal(d.voiceEnhance, true);
+  assert.equal(d.cleanupCutoffHz, 120);
+  assert.equal(normalizeSettings({ voiceEnhance: false }).voiceEnhance, false);
+  assert.equal(normalizeSettings({ cleanupCutoffHz: 180 }).cleanupCutoffHz, 180);
+  assert.equal(normalizeSettings({ cleanupCutoffHz: "90" }).cleanupCutoffHz, 90);
+  for (const bad of [0, -3, 9999, "abc", Number.NaN]) {
+    assert.equal(normalizeSettings({ cleanupCutoffHz: bad }).cleanupCutoffHz, 120, String(bad));
+  }
+  assert.equal(normalizeSettings({ cleanupCutoffHz: 20 }).cleanupCutoffHz, 40);
+});
+
+test("recording cleanup toggle flips and persists", async () => {
+  const store = mockStore({});
+  const dialog = mockDialog({ select: ["cleanup", undefined, undefined] });
+  const d = { dialog: dialog.api, toast: () => {}, options: {}, getSettings: () => store.state, update: store.update };
+  await showRecordingSettings(d);
+  assert.equal(store.state.voiceEnhance, false);
+});
+
+test("cutoff presets and custom validation", async () => {
+  const store = mockStore({});
+  let dialog = mockDialog({ select: ["cutoff", "180", undefined, undefined] });
+  let d = { dialog: dialog.api, toast: () => {}, options: {}, getSettings: () => store.state, update: store.update };
+  await showRecordingSettings(d);
+  assert.equal(store.state.cleanupCutoffHz, 180);
+  const toasts = [];
+  dialog = mockDialog({ select: ["cutoff", "__custom", undefined, undefined], prompt: ["9"] });
+  d = { dialog: dialog.api, toast: (m) => toasts.push(m), options: {}, getSettings: () => store.state, update: store.update };
+  await showRecordingSettings(d);
+  assert.equal(store.state.cleanupCutoffHz, 180);
+  assert.ok(toasts.length > 0);
+});
+
 test("mergeLegacyHotkey prefers explicit hold key", () => {
   assert.equal(mergeLegacyHotkey({}, { hotkey: "alt+r", toggleHotkey: "ctrl+r" }).recordingHotkey, "alt+r");
   assert.equal(mergeLegacyHotkey({}, { toggleHotkey: "ctrl+space" }).recordingHotkey, "ctrl+space");
