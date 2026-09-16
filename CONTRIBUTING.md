@@ -51,6 +51,8 @@ npm pack --dry-run  # inspect the published file list
   `./tui` → `src/tui.ts` (`Plugin.define({ id, setup })`).
 - Do not add dependencies without calling it out in the PR (native modules
   multiply per-platform install risk).
+- Run `npm audit` monthly and on every `@opencode/plugin` upgrade; see
+  `docs/security.md` for the standing assessment. Fix high/critical promptly.
 
 ## Docs expectations
 
@@ -74,4 +76,7 @@ npm pack --dry-run  # inspect the published file list
   the TUI twice** (`/restart` does not reload plugin code), confirm no
   `Plugin failed` banner plus the feature at work.
 - Create the GitHub release from the matching tag.
-- Do not publish prereleases as `latest` unless intentional.
+- Do not publish prereleases as `latest` unless intentional. Beta versions
+  publish with `npm publish --tag beta` and install via pinned spec
+  (`"@safwan-o/opencode-voice@0.4.0-beta.0"`); verify `latest` still points at
+  the last stable with `npm view ... dist-tags`.
