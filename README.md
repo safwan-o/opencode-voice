@@ -26,9 +26,8 @@
 
 ## Demo
 
-<video src="https://github.com/safwan-o/opencode-voice/releases/download/v0.4.0/voice-demo.mp4" width="100%" controls></video>
+<video src="https://github.com/user-attachments/assets/2edc713c-7a5e-46b7-8e66-3caeab4ab396" width="100%" controls></video>
 
-*Can't see the video above? [Download or watch it here.](https://github.com/safwan-o/opencode-voice/releases/download/v0.4.0/voice-demo.mp4)*
 
 | Slash commands | Voice settings | Model picker |
 |---|---|---|
