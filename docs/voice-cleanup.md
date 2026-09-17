@@ -40,3 +40,22 @@ recognizer-relevant balance is fixed — see functional proof below).
 - Filtered copy is `${audioFile}.${pid}.clean.wav`, always unlinked (timeout /
   error / exit paths). `settings.voiceEnhance !== false` defaults ON for V1
   callers; V2 store defaults live in `src/settings.ts`.
+
+## Live verification (0.4.0-beta.0, maintainer machine, 2026-09-16/17)
+Dictated fox-sentence protocol, real mic + room rumble:
+
+| Step | Setup | Result |
+|---|---|---|
+| 1 control | whisper-small | correct |
+| 2 fix | moonshine-base + cleanup ON | word-perfect |
+| 3 toggle proof | cleanup OFF | degraded (`frocks`, garbled onset) as expected |
+| 4a cutoff 80 Hz | moonshine-base | degraded (`quid round-fork`: rumble leaks) |
+| 4b cutoff 120 Hz | moonshine-base | perfect (default confirmed) |
+| 4c cutoff 180 Hz | moonshine-base | slight degrade (`problem` for `brown`: eats voice) |
+| whisper-small-q5_1 | cleanup ON | good, minor swaps (`churned` for `jumps`) |
+| qwen3-asr-0.6b | cleanup ON | flawless transcript, noticeably slower (10x params, CPU-only) |
+
+## Known issue (carried, not blocking)
+wl-copy posts a system "clipboard ready" notification and paste into the TUI
+only works after interacting with it (likely compositor focus/timing, content
+itself is fine). Under investigation for 0.4.1.

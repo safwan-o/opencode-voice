@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.0 - 2026-09-17
+
+### Added
+
+- Voice cleanup chain (highpass 120 Hz, declick, normalize, limit) with toggle
+  + cutoff setting (40-500 Hz); pre-transcribe filtering for every recorder,
+  raw fallback, temp cleanup. Verified live against room rumble.
+- TypeScript + lint gates, CI matrix, coverage signal, issue/PR templates.
+- Docs: V2 identity, security posture, loader notes, live evidence table.
+
+### Fixed
+
+- Controller phase lock: no double-start or queued transcriptions on spam.
+- Model picker rows fit narrow dialogs; record key defaults to ctrl+space.
+- Clipboard delivery replaces the review box; submit shortcut removed.
+
+
 ## 0.4.0-beta.0 - 2026-09-17
 
 Beta: voice cleanup, race lock, standards gate. Install pinned, do not use
