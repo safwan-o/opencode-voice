@@ -44,7 +44,7 @@
   ],
   "scripts": {
     "check": "npm run typecheck && node --check index.js && node --check lib/models.js && node --check lib/handy-model-catalog.js && node --check lib/download.js && node --check lib/engine.js && node --check lib/engines.js && node --check lib/wav.js && node --check bin/opencode-voice.js && node --check scripts/package-engine-asset.mjs && node --check scripts/build-engine-registry.mjs && node --check scripts/update-handy-model-catalog.mjs && node --check scripts/gen-voice-fixtures.mjs && npm run lint && npm test",
-    "test": "node --test",
+    "test": "node --test \"test/*.test.js\"",
     "update-handy-model-catalog": "node scripts/update-handy-model-catalog.mjs",
     "prepack": "npm run check",
     "typecheck": "npx --yes -p typescript@^5 tsc --noEmit -p tsconfig.json",
@@ -55,7 +55,7 @@
     "@opentui/core": "^0.5.11",
     "@opentui/solid": "^0.5.11",
     "ffmpeg-static": "^5.2.0",
-    "solid-js": "^1.9.15"
+    "solid-js": "1.9.12"
   },
   "publishConfig": {
     "access": "public"
@@ -77,7 +77,7 @@
     "whisper.cpp"
   ],
   "engines": {
-    "node": ">=20",
+    "node": ">=22",
     "opencode": ">=2.0.0"
   },
   "devDependencies": {
