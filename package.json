@@ -77,7 +77,7 @@
     "whisper.cpp"
   ],
   "engines": {
-    "node": ">=20",
+    "node": ">=22",
     "opencode": ">=2.0.0"
   },
   "devDependencies": {

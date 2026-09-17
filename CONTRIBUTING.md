@@ -6,7 +6,7 @@ via pull request, and a green test gate on every change.
 
 ## Setup
 
-- Use Node.js 20 or newer.
+- Use Node.js 22 or newer (tests import `.ts` sources directly, which needs type-stripping).
 - Clone and install:
   ```bash
   git clone https://github.com/safwan-o/opencode-voice.git opencode-voice
