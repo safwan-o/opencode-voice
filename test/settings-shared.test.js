@@ -6,6 +6,7 @@ import {
   migrateHotkeyV2,
   normalizeSettings,
   optionsOverlay,
+  parseCutoffHz,
   V2_DEFAULT_HOTKEY,
 } from "../lib/settings.js";
 
@@ -113,4 +114,15 @@ test("V1 migrateSettings writes back once", async () => {
   const size = Object.keys(kv.store).length;
   migrateSettings(kv);
   assert.equal(Object.keys(kv.store).length, size, "second run must be a no-op");
+});
+
+test("lib parseCutoffHz accepts the voice-safe band", () => {
+  assert.equal(parseCutoffHz("80"), 80);
+  assert.equal(parseCutoffHz(120), 120);
+  assert.equal(parseCutoffHz(" 179.6 "), 180);
+  assert.equal(parseCutoffHz(40), 40);
+  assert.equal(parseCutoffHz(500), 500);
+  for (const bad of ["", "abc", 0, -3, 39, 501, 9999, Number.NaN, undefined, null]) {
+    assert.equal(parseCutoffHz(bad), undefined, String(bad));
+  }
 });

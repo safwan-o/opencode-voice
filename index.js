@@ -2,7 +2,7 @@ import { MODELS, PLUGIN_ID, formatSize, getCacheDir, getModel, getModelPath, isM
 import { downloadModel } from "./lib/download.js";
 import { VoiceRuntime, ensureManagedRecorder, getRecorderStatus, listMicrophones, probeRecorder, resolveCommand } from "./lib/engine.js";
 import { getEngineStatus, importManagedEngine, installManagedEngine, probeEngine, removeManagedEngine } from "./lib/engines.js";
-import { mergeLegacyHotkey, migrateHotkeyV2, normalizeSettings, optionsOverlay } from "./lib/settings.js";
+import { mergeLegacyHotkey, migrateHotkeyV2, normalizeSettings, optionsOverlay, parseCutoffHz } from "./lib/settings.js";
 import { createVoiceController } from "./lib/voice-controller.js";
 
 const KV = {
@@ -656,13 +656,22 @@ function showEngineManager(ctx, engineId = getModel(readSettings(ctx.api.kv, ctx
           }
         }
         if (option.value === "remove") {
-          try {
-            await removeManagedEngine(engineId, ctx.options, settings);
-            toast(ctx.api, "Managed engine removed");
-            showEngineManager(ctx, engineId);
-          } catch (error) {
-            showError(ctx, "Engine remove failed", error);
-          }
+          setDialog(ctx, "medium", () =>
+            ctx.api.ui.DialogConfirm({
+              title: "Remove managed engine?",
+              message: status.managedBinary,
+              onConfirm: async () => {
+                try {
+                  await removeManagedEngine(engineId, ctx.options, settings);
+                  toast(ctx.api, "Managed engine removed");
+                  showEngineManager(ctx, engineId);
+                } catch (error) {
+                  showError(ctx, "Engine remove failed", error);
+                }
+              },
+              onCancel: () => showEngineManager(ctx, engineId),
+            }),
+          );
         }
       },
     }),
@@ -699,11 +708,61 @@ function showRecordingSettings(ctx) {
       title: "Recording",
       options: [
         { title: "Record key", value: "key", description: settings.recordingHotkey || "not set" },
+        { title: "Voice cleanup", value: "cleanup", description: settings.voiceEnhance ? "enabled" : "disabled" },
+        { title: "Rumble filter", value: "cutoff", description: settings.voiceEnhance ? `${settings.cleanupCutoffHz} Hz` : "off (cleanup disabled)", disabled: !settings.voiceEnhance },
         { title: "Toggle recording", value: "toggle", description: "Press once to start and again to transcribe.", disabled: true },
         { title: "Hold to talk", value: "hold", description: "Unavailable until OpenCode provides key-release events.", disabled: true },
       ],
       onSelect: (option) => {
         if (option.value === "key") showRecordingHotkeyPicker(ctx);
+        if (option.value === "cleanup") {
+          writeSetting(ctx.api.kv, "voiceEnhance", !settings.voiceEnhance);
+          showRecordingSettings(ctx);
+        }
+        if (option.value === "cutoff") showCutoffPicker(ctx);
+      },
+    }),
+  );
+}
+
+function showCutoffPicker(ctx) {
+  const settings = readSettings(ctx.api.kv, ctx.options);
+  const presets = [
+    { title: "80 Hz", value: "80", description: "Gentle; keeps deep voices intact." },
+    { title: "120 Hz", value: "120", description: "Default; proven on rumble-choked clips." },
+    { title: "180 Hz", value: "180", description: "Aggressive; telephony-style." },
+    { title: "Custom cutoff", value: "__custom", description: "Enter a frequency in Hz (40-500)." },
+  ];
+
+  setDialog(ctx, "medium", () =>
+    ctx.api.ui.DialogSelect({
+      title: "Rumble filter cutoff",
+      current: presets.some((preset) => preset.value === String(settings.cleanupCutoffHz))
+        ? String(settings.cleanupCutoffHz)
+        : "__custom",
+      options: presets,
+      onSelect: (option) => {
+        if (option.value === "__custom") {
+          showPrompt(ctx, {
+            title: "Custom cutoff frequency",
+            placeholder: "120",
+            value: String(settings.cleanupCutoffHz),
+            onConfirm: (value) => {
+              const parsed = parseCutoffHz(value);
+              if (parsed === undefined) {
+                toast(ctx.api, "Cutoff must be 40-500 Hz.", "warning");
+                showCutoffPicker(ctx);
+                return;
+              }
+              writeSetting(ctx.api.kv, "cleanupCutoffHz", parsed);
+              showRecordingSettings(ctx);
+            },
+          });
+          return;
+        }
+
+        writeSetting(ctx.api.kv, "cleanupCutoffHz", Number(option.value));
+        showRecordingSettings(ctx);
       },
     }),
   );
