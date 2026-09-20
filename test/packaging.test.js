@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import test from "node:test";
 import { createRequire } from "node:module";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 function exportTarget(subpath) {
   const entry = pkg.exports?.[subpath];
@@ -15,11 +18,7 @@ function exportTarget(subpath) {
 test("exports map targets exist on disk", () => {
   for (const subpath of [".", "./tui", "./runtime"]) {
     const target = exportTarget(subpath);
-    const fromRoot = target.replace(/^\.\//, "../");
-    assert.ok(
-      existsSync(new URL(fromRoot, import.meta.url)),
-      `${subpath} -> ${target} missing`,
-    );
+    assert.ok(existsSync(resolve(ROOT, target)), `${subpath} -> ${target} missing`);
   }
   assert.equal(pkg.main, exportTarget("."), "main and exports[.] diverged");
 });
@@ -30,7 +29,11 @@ test("engines declare dual-version support", () => {
 });
 
 test("V1 peer stays optional", () => {
-  assert.match(pkg.peerDependencies?.["@opencode-ai/plugin"] ?? "", /1\.17/);
+  assert.match(
+    pkg.peerDependencies?.["@opencode-ai/plugin"] ?? "",
+    /1\.17/,
+    "V1 peer range must cover 1.17.x",
+  );
   assert.equal(
     pkg.peerDependenciesMeta?.["@opencode-ai/plugin"]?.optional,
     true,
