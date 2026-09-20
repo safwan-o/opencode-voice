@@ -3,6 +3,7 @@ import { downloadModel } from "./lib/download.js";
 import { VoiceRuntime, ensureManagedRecorder, getRecorderStatus, listMicrophones, probeRecorder, resolveCommand } from "./lib/engine.js";
 import { getEngineStatus, importManagedEngine, installManagedEngine, probeEngine, removeManagedEngine } from "./lib/engines.js";
 import { mergeLegacyHotkey, migrateHotkeyV2, normalizeSettings, optionsOverlay } from "./lib/settings.js";
+import { createVoiceController } from "./lib/voice-controller.js";
 
 const KV = {
   // Legacy keys are read once by migrateSettings so existing installations keep
@@ -811,87 +812,23 @@ async function appendTranscription(ctx, text, submit) {
 }
 
 async function stopAndTranscribe(ctx, submit) {
-  if (ctx.runtime.isTranscribing()) {
-    toast(ctx.api, "Transcription is already running", "warning");
-    return;
-  }
-
-  try {
-    const settings = readSettings(ctx.api.kv, ctx.options);
-    const model = getModel(settings.model);
-    const audioFile = await ctx.runtime.stop();
-    if (!audioFile) return;
-
-    toast(ctx.api, "Transcribing...");
-    const text = await ctx.runtime.transcribe(audioFile, model, settings);
-    await appendTranscription(ctx, text, submit || settings.autoSubmit);
-    toast(ctx.api, submit || settings.autoSubmit ? "Transcribed and submitted" : "Transcribed", "success");
-  } catch (error) {
-    toast(ctx.api, error instanceof Error ? error.message : String(error), "error");
-  }
+  await ctx.voice.stopAndTranscribe(submit);
 }
 
 async function startVoice(ctx, submit = false, hold = false) {
-  if (ctx.runtime.isTranscribing()) {
-    toast(ctx.api, "Transcription is already running", "warning");
-    return;
-  }
-
-  if (ctx.runtime.isRecording()) return;
-
-  const settings = readSettings(ctx.api.kv, ctx.options);
-  const model = getModel(settings.model);
-  if (!isModelDownloaded(model, ctx.options, settings)) {
-    try {
-      await ensureEngineReady(ctx, settings, model);
-      await ensureDownloaded(ctx, model, settings);
-      ctx.api.ui.dialog.clear();
-    } catch (error) {
-      showError(ctx, "Voice setup failed", error);
-      return;
-    }
-  }
-
-  try {
-    await ensureEngineReady(ctx, settings, model);
-    await ensureRecorderReady(ctx, settings);
-  } catch (error) {
-    showError(ctx, "Voice runtime setup failed", error);
-    return;
-  }
-
-  try {
-    ctx.runtime.pendingSubmit = submit || settings.autoSubmit;
-    await ctx.runtime.start(settings);
-    toast(ctx.api, hold ? `Recording. Release ${settings.recordingHotkey || "the recording key"} to stop.` : submit ? "Recording for submit. Run /voice-submit again to stop." : "Recording. Run /voice again to stop.");
-  } catch (error) {
-    toast(ctx.api, error instanceof Error ? error.message : String(error), "error");
-  }
+  await ctx.voice.start(submit, hold);
 }
 
 async function finishVoice(ctx, submit = false) {
-  if (!ctx.runtime.isRecording()) return;
-  await stopAndTranscribe(ctx, submit || ctx.runtime.pendingSubmit);
-  ctx.runtime.pendingSubmit = false;
+  await ctx.voice.finish(submit);
 }
 
 async function toggleVoice(ctx, submit = false) {
-  if (ctx.runtime.isTranscribing()) {
-    toast(ctx.api, "Transcription is already running", "warning");
-    return;
-  }
-
-  if (ctx.runtime.isRecording()) {
-    await finishVoice(ctx, submit);
-    return;
-  }
-
-  await startVoice(ctx, submit, false);
+  await ctx.voice.toggle(submit);
 }
 
 function stopVoice(ctx) {
-  ctx.runtime.cancel();
-  toast(ctx.api, "Voice recording cancelled");
+  ctx.voice.cancel();
 }
 
 function buildBindings(settings) {
@@ -989,6 +926,23 @@ const plugin = {
     };
 
     migrateSettings(api.kv, options);
+    ctx.voice = createVoiceController({
+      runtime,
+      options: options || {},
+      getSettings: () => readSettings(api.kv, options),
+      toast: (message, variant = "info") => toast(api, message, variant),
+      deliver: (text, submit) => appendTranscription(ctx, text, submit),
+      onSetupError: (title, error) => showError(ctx, title, error),
+      hints: {
+        holdStart: (key) => `Recording. Release ${key} to stop.`,
+      },
+      ready: {
+        isModelDownloaded,
+        ensureDownloaded: (env, model) => ensureDownloaded(ctx, model, env.settings),
+        ensureEngineReady: (env, model) => ensureEngineReady(ctx, env.settings, model),
+        ensureRecorderReady: (env) => ensureRecorderReady(ctx, env.settings),
+      },
+    });
     ctx.registerCommands();
     api.lifecycle.onDispose(() => {
       if (ctx.disposeCommands) ctx.disposeCommands();
