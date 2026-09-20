@@ -30,12 +30,15 @@ function readSettings(kv, options = {}) {
     const value = kv.get(key, undefined);
     if (value !== undefined) stored[name] = value;
   }
+  // Options sit under stored KV; legacy hold/toggle keys fill only what neither provides.
   const settings = normalizeSettings({
-    ...optionsOverlay(options),
-    ...mergeLegacyHotkey(stored, {
-      hotkey: kv.get(KV.hotkey, ""),
-      toggleHotkey: kv.get(KV.toggleHotkey, ""),
-    }),
+    ...mergeLegacyHotkey(
+      { ...optionsOverlay(options), ...stored },
+      {
+        hotkey: kv.get(KV.hotkey, ""),
+        toggleHotkey: kv.get(KV.toggleHotkey, ""),
+      },
+    ),
   });
 
   // V1-only key: kept trimmed for backward compatibility.
