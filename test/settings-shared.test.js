@@ -77,8 +77,15 @@ test("lib options overlay keeps known keys only", () => {
   assert.deepEqual(optionsOverlay(), {});
 });
 
-test("V1 readSettings: stored KV beats plugin options", async () => {
+test("V1 readSettings: plugin options lose to nothing but stored KV", async () => {
   const { KV, readSettings } = await import("../index.js");
+  const empty = readSettings(fakeKv({}), { recordingHotkey: "alt+r", mic: "hw:0" });
+  assert.equal(empty.recordingHotkey, "alt+r", "options must beat the merge default");
+  assert.equal(empty.mic, "hw:0");
+  const stored = readSettings(fakeKv({ [KV.recordingHotkey]: "alt+g" }), {
+    recordingHotkey: "alt+r",
+  });
+  assert.equal(stored.recordingHotkey, "alt+g", "stored KV still beats options");
   assert.ok(KV.voiceEnhance && KV.cleanupCutoffHz && KV.hotkeyMigratedV2);
   const kv = fakeKv({ [KV.language]: "de", [KV.voiceEnhance]: false });
   const s = readSettings(kv, { language: "fr", mic: "hw:0" });
