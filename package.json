@@ -78,7 +78,7 @@
   ],
   "engines": {
     "node": ">=22",
-    "opencode": ">=2.0.0"
+    "opencode": ">=1.17.4"
   },
   "devDependencies": {
     "@types/node": "^20.19.43"
