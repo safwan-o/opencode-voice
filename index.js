@@ -1,7 +1,8 @@
-import { MODELS, DEFAULT_SETTINGS, PLUGIN_ID, formatSize, getCacheDir, getModel, getModelPath, isModelDownloaded, isModelFilePresent } from "./lib/models.js";
+import { MODELS, PLUGIN_ID, formatSize, getCacheDir, getModel, getModelPath, isModelDownloaded, isModelFilePresent } from "./lib/models.js";
 import { downloadModel } from "./lib/download.js";
 import { VoiceRuntime, ensureManagedRecorder, getRecorderStatus, listMicrophones, probeRecorder, resolveCommand } from "./lib/engine.js";
 import { getEngineStatus, importManagedEngine, installManagedEngine, probeEngine, removeManagedEngine } from "./lib/engines.js";
+import { mergeLegacyHotkey, migrateHotkeyV2, normalizeSettings, optionsOverlay } from "./lib/settings.js";
 
 const KV = {
   // Legacy keys are read once by migrateSettings so existing installations keep
@@ -17,21 +18,28 @@ const KV = {
   downloadDir: "voice.downloadDir",
   onboardingDone: "voice.onboardingDone",
   setupSkipped: "voice.setupSkipped",
+  voiceEnhance: "voice.voiceEnhance",
+  cleanupCutoffHz: "voice.cleanupCutoffHz",
+  hotkeyMigratedV2: "voice.hotkeyMigratedV2",
 };
 
-function readSettings(kv) {
-  const settings = { ...DEFAULT_SETTINGS };
-  for (const [name, key] of Object.entries(KV)) settings[name] = kv.get(key, settings[name]);
+function readSettings(kv, options = {}) {
+  // Precedence: defaults < plugin options < stored KV (a saved user setting always wins).
+  const stored = {};
+  for (const [name, key] of Object.entries(KV)) {
+    const value = kv.get(key, undefined);
+    if (value !== undefined) stored[name] = value;
+  }
+  const settings = normalizeSettings({
+    ...optionsOverlay(options),
+    ...mergeLegacyHotkey(stored, {
+      hotkey: kv.get(KV.hotkey, ""),
+      toggleHotkey: kv.get(KV.toggleHotkey, ""),
+    }),
+  });
 
-  if (!getModel(settings.model)?.implemented) settings.model = DEFAULT_SETTINGS.model;
-  settings.recordingHotkey = String(settings.recordingHotkey || settings.toggleHotkey || "ctrl+r").trim();
+  // V1-only key: kept trimmed for backward compatibility.
   settings.submitHotkey = String(settings.submitHotkey || "").trim();
-  settings.language = String(settings.language || "auto").trim() || "auto";
-  settings.mic = String(settings.mic || "").trim();
-  settings.downloadDir = String(settings.downloadDir || "").trim();
-  settings.autoSubmit = Boolean(settings.autoSubmit);
-  settings.onboardingDone = Boolean(settings.onboardingDone);
-  settings.setupSkipped = Boolean(settings.setupSkipped);
   return settings;
 }
 
@@ -39,13 +47,12 @@ function writeSetting(kv, name, value) {
   kv.set(KV[name], value);
 }
 
-function migrateSettings(kv) {
-  // Early builds stored separate hold and toggle keys. Preserve the user's
-  // explicit hold key first, otherwise retain the old toggle binding.
-  if (!kv.get(KV.recordingHotkey, undefined)) {
-    const configuredHotkey = String(kv.get(KV.hotkey, "")).trim();
-    kv.set(KV.recordingHotkey, configuredHotkey || kv.get(KV.toggleHotkey, DEFAULT_SETTINGS.recordingHotkey));
-  }
+function migrateSettings(kv, options = {}) {
+  // One-time: move installs off the old ctrl+r default; explicit keys are preserved.
+  const patch = migrateHotkeyV2(readSettings(kv, options));
+  if (!patch) return;
+  if (patch.recordingHotkey) kv.set(KV.recordingHotkey, patch.recordingHotkey);
+  kv.set(KV.hotkeyMigratedV2, true);
 }
 
 function toast(api, message, variant = "info") {
@@ -272,7 +279,7 @@ async function ensureRecorderReady(ctx, settings) {
 }
 
 function showModelPicker(ctx, firstRun = false) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   setDialog(ctx, "large", () =>
     ctx.api.ui.DialogSelect({
       title: firstRun ? "Set up voice input: choose a local model" : "Voice model",
@@ -303,7 +310,7 @@ function showModelPicker(ctx, firstRun = false) {
         const model = getModel(option.value);
         if (!model?.implemented) return;
 
-        const nextSettings = { ...readSettings(ctx.api.kv), model: model.id };
+        const nextSettings = { ...readSettings(ctx.api.kv, ctx.options), model: model.id };
         writeSetting(ctx.api.kv, "model", model.id);
         writeSetting(ctx.api.kv, "onboardingDone", true);
         writeSetting(ctx.api.kv, "setupSkipped", false);
@@ -321,7 +328,7 @@ function showModelPicker(ctx, firstRun = false) {
 }
 
 function shouldShowStartupModelPicker(ctx) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const model = getModel(settings.model);
   return !settings.onboardingDone || (!settings.setupSkipped && !isModelDownloaded(model, ctx.options, settings));
 }
@@ -444,7 +451,7 @@ const WHISPER_LANGUAGES = [
 ];
 
 function showLanguagePicker(ctx) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const options = [
     { title: "Auto detect", value: "auto", description: "Let Whisper detect the language." },
     ...WHISPER_LANGUAGES.map(([name, code]) => ({ title: name, value: code })),
@@ -478,7 +485,7 @@ function showLanguagePicker(ctx) {
 }
 
 function showMicrophonePicker(ctx) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const commandOptions = { ...ctx.options, downloadDir: settings.downloadDir, skipFfmpegStaticInstall: true };
   const placeholder = process.platform === "win32" ? "default, audio=default, \"Microphone (Name)\"" : "default, hw:0,0, pulse, :0, ...";
   const devices = listMicrophones(commandOptions);
@@ -513,7 +520,7 @@ function showMicrophonePicker(ctx) {
 }
 
 function showRecordingHotkeyPicker(ctx) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const presets = [
     { title: "Ctrl + R", value: "ctrl+r", description: "Start and stop recording." },
     { title: "Ctrl + Space", value: "ctrl+space", description: "Start and stop recording." },
@@ -550,7 +557,7 @@ function showRecordingHotkeyPicker(ctx) {
 }
 
 function showDiagnostics(ctx) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const model = getModel(settings.model);
   const commandOptions = { ...ctx.options, downloadDir: settings.downloadDir, skipFfmpegStaticInstall: true };
   const whisperCli = resolveCommand("whisper-cli", commandOptions);
@@ -589,8 +596,8 @@ function showDiagnostics(ctx) {
   );
 }
 
-function showEngineManager(ctx, engineId = getModel(readSettings(ctx.api.kv).model).engine) {
-  const settings = readSettings(ctx.api.kv);
+function showEngineManager(ctx, engineId = getModel(readSettings(ctx.api.kv, ctx.options).model).engine) {
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const status = getEngineStatus(engineId, ctx.options, settings);
   const canImport = Boolean(status.resolvedBinary && status.source !== "managed");
   const options = [
@@ -669,7 +676,7 @@ function showError(ctx, title, error) {
 }
 
 async function downloadActiveModel(ctx) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const model = getModel(settings.model);
   try {
     await ensureEngineReady(ctx, settings, model);
@@ -681,7 +688,7 @@ async function downloadActiveModel(ctx) {
 }
 
 function showRecordingSettings(ctx) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
 
   setDialog(ctx, "medium", () =>
     ctx.api.ui.DialogSelect({
@@ -699,7 +706,7 @@ function showRecordingSettings(ctx) {
 }
 
 function showTranscriptionSettings(ctx) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const model = getModel(settings.model);
   const downloaded = isModelDownloaded(model, ctx.options, settings);
 
@@ -739,7 +746,7 @@ function showTranscriptionSettings(ctx) {
 }
 
 function showSystemSettings(ctx) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const model = getModel(settings.model);
 
   setDialog(ctx, "medium", () =>
@@ -774,7 +781,7 @@ function showSystemSettings(ctx) {
 }
 
 function showSettings(ctx) {
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const model = getModel(settings.model);
 
   setDialog(ctx, "large", () =>
@@ -807,7 +814,7 @@ async function stopAndTranscribe(ctx, submit) {
   }
 
   try {
-    const settings = readSettings(ctx.api.kv);
+    const settings = readSettings(ctx.api.kv, ctx.options);
     const model = getModel(settings.model);
     const audioFile = await ctx.runtime.stop();
     if (!audioFile) return;
@@ -829,7 +836,7 @@ async function startVoice(ctx, submit = false, hold = false) {
 
   if (ctx.runtime.isRecording()) return;
 
-  const settings = readSettings(ctx.api.kv);
+  const settings = readSettings(ctx.api.kv, ctx.options);
   const model = getModel(settings.model);
   if (!isModelDownloaded(model, ctx.options, settings)) {
     try {
@@ -969,7 +976,7 @@ const plugin = {
       disposeCommands: undefined,
       registerCommands() {
         if (ctx.disposeCommands) ctx.disposeCommands();
-        const settings = readSettings(api.kv);
+        const settings = readSettings(api.kv, ctx.options);
         ctx.disposeCommands = api.keymap.registerLayer({
           priority: 100,
           commands: buildCommands(ctx),
@@ -978,7 +985,7 @@ const plugin = {
       },
     };
 
-    migrateSettings(api.kv);
+    migrateSettings(api.kv, options);
     ctx.registerCommands();
     api.lifecycle.onDispose(() => {
       if (ctx.disposeCommands) ctx.disposeCommands();
@@ -990,6 +997,8 @@ const plugin = {
     }, 250);
   },
 };
+
+export { KV, migrateSettings, readSettings };
 
 export default plugin;
 
