@@ -938,7 +938,13 @@ const plugin = {
       },
       ready: {
         isModelDownloaded,
-        ensureDownloaded: (env, model) => ensureDownloaded(ctx, model, env.settings),
+        ensureDownloaded: async (env, model) => {
+          // Restores pre-controller behavior: startVoice cleared the
+          // download-status dialog before recording began.
+          const ok = await ensureDownloaded(ctx, model, env.settings);
+          ctx.api.ui.dialog.clear();
+          return ok;
+        },
         ensureEngineReady: (env, model) => ensureEngineReady(ctx, env.settings, model),
         ensureRecorderReady: (env) => ensureRecorderReady(ctx, env.settings),
       },
