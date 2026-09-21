@@ -28,9 +28,23 @@
 - Record key default is now `ctrl+space` (one-time migrate off `ctrl+r`).
 
 ## V1 appendix (dual-version package, 0.5.0 track)
-- Config: `opencode plugin <spec>` writes the global config `plugin` array
-  (`Config.plugin: Array<string | [string, PluginOptions]>`); tuple second
-  element carries plugin options. Manual entry works the same.
+- Config: `opencode plugin <spec>` writes the project (default) or global
+  (`-g`) config `plugin` array (`Config.plugin: Array<string | [string, PluginOptions]>`).
+  **That array feeds the server loader only** — a TUI-only package listed
+  there fails with `must default export an object with server()`.
+- TUI plugins load from `tui.json` `plugin` (global
+  `~/.config/opencode/tui.json` + project `.opencode/tui.json`, merged), and
+  **only as file entries**: npm specs are skipped for the TUI host, so the
+  published package name alone never loads the voice commands on V1.
+- File-entry gate (verified by bisection against 1.18.31): a file plugin is
+  silently skipped when its `package.json` `exports` map contains a `./tui`
+  subpath. Our package needs `./tui` for V2, so V1 installs go through a
+  shim dir — symlinks to the repo plus a minimal `package.json` (`name`,
+  `version`, `type: module`, `main`; **no** `exports` map). See the README
+  1.x tab for the exact commands. Symlinks track the working tree, so the
+  shim always runs current repo code.
+- Keep the shim `version` stable: changing it under a registered path keeps
+  the loader's old verdict — re-run the `plugin` command to refresh.
 - Entry: `main` → `./index.js`, shape `{id?, tui}` with no `server` key
   (`TuiPluginModule`, `@opencode-ai/plugin@1.18.31`).
 - `api.keymap.registerLayer({priority, commands, bindings})` runs directly at
