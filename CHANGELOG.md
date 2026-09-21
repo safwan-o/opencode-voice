@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 - 2026-09-21
 
 Dual-version support: the same package now serves OpenCode V1 (`main`,
 `{id, tui}`) and V2 (`./tui`, `Plugin.define`) with full feature parity.
