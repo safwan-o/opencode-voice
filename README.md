@@ -86,8 +86,9 @@ config manually has the same effect.)
 | Submit key          | extra `submitHotkey` binding available                     | slash command only                                         |
 
 Shared on both versions: models, engines, cleanup + cutoff, `ctrl+space`
-default, all six commands. Only picker row format and diagnostics text differ
-cosmetically.
+default, and the four user-facing commands (V1 additionally exposes two
+hidden hold-to-talk commands). Only picker row format and diagnostics text
+differ cosmetically.
 
 On first launch, choose a model. The plugin downloads its required local runtime and model weights automatically. Audio and transcription stay on your machine.
 
