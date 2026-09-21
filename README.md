@@ -46,6 +46,8 @@
 
 ## Install
 
+### OpenCode 2.x
+
 OpenCode 2.x loads TUI plugins from `cli.json` (`~/.config/opencode/cli.json`):
 
 ```json
@@ -62,6 +64,30 @@ only restarts the session — plugin code loads at TUI startup.)
 > `tui.json` is legacy and ignored by OpenCode 2.x — do not list the plugin
 > there. Do not use `opencode plugin add` either: that registers server-side
 > plugins and this package is CLI-only, so it would report a load failure.
+
+### OpenCode 1.x
+
+OpenCode 1.x manages TUI plugins through the `opencode plugin` command:
+
+```bash
+opencode plugin @safwan-o/opencode-voice
+```
+
+Then restart OpenCode. (Adding the spec to the `plugin` array in the global
+config manually has the same effect.)
+
+### Version differences
+
+| Area                | OpenCode 1.x                                               | OpenCode 2.x                                               |
+| ------------------- | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| Install             | `opencode plugin @safwan-o/opencode-voice`                 | `cli.json` `plugins` array                                 |
+| Entry point         | `main` → `./index.js` (`{id, tui}`)                        | `./tui` → `src/tui.ts` (`Plugin.define`)                   |
+| Transcription lands | appended into the prompt for in-place review               | clipboard for pasting, or submitted via `/voice-submit`    |
+| Submit key          | extra `submitHotkey` binding available                     | slash command only                                         |
+
+Shared on both versions: models, engines, cleanup + cutoff, `ctrl+space`
+default, all six commands. Only picker row format and diagnostics text differ
+cosmetically.
 
 On first launch, choose a model. The plugin downloads its required local runtime and model weights automatically. Audio and transcription stay on your machine.
 
@@ -82,7 +108,7 @@ Add `--global` if the plugin was installed in OpenCode's global configuration.
 Do not clone the repo unless you want to develop the plugin.
 
 > [!TIP]
-> First launch opens a model picker. Choose a local model, let it download, then use `ctrl+space` to dictate (change it in `/voice-settings`). With auto-submit off, transcriptions land in your clipboard for pasting.
+> First launch opens a model picker. Choose a local model, let it download, then use `ctrl+space` to dictate (change it in `/voice-settings`). On 2.x with auto-submit off, transcriptions land in your clipboard for pasting; on 1.x they are appended into the prompt for in-place review.
 
 ## What It Installs
 
