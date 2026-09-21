@@ -967,7 +967,11 @@ function buildCommands(ctx) {
 const plugin = {
   id: PLUGIN_ID,
   tui: async (api, options = {}) => {
-    const runtime = new VoiceRuntime(options || {});
+    // Test seams (mirroring V2): options.createRuntime swaps the recorder
+    // backend, options.ready overrides the readiness checks.
+    const createRuntime =
+      (options || {}).createRuntime ?? ((o) => new VoiceRuntime(o));
+    const runtime = createRuntime(options || {});
     const ctx = {
       api,
       options: options || {},
@@ -1006,6 +1010,7 @@ const plugin = {
         },
         ensureEngineReady: (env, model) => ensureEngineReady(ctx, env.settings, model),
         ensureRecorderReady: (env) => ensureRecorderReady(ctx, env.settings),
+        ...((options || {}).ready ?? {}),
       },
     });
     ctx.registerCommands();
