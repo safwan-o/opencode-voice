@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+Dual-version support: the same package now serves OpenCode V1 (`main`,
+`{id, tui}`) and V2 (`./tui`, `Plugin.define`) with full feature parity.
+
+### Added
+
+- Shared settings core (`lib/settings.js`): one normalization, legacy-key
+  merge, options overlay, and `ctrl+space` migration for both versions.
+  V1 KV learns `voiceEnhance`, `cleanupCutoffHz`, `hotkeyMigratedV2`, so the
+  voice cleanup chain runs on V1 too.
+- Shared voice controller (`lib/voice-controller.js`): single-flight phase
+  lock for both adapters; V1 keeps native prompt append, V2 keeps clipboard.
+- V1 dialog parity: cleanup toggle, rumble-filter picker (40-500 Hz), engine
+  removal confirm. V1-only `submitHotkey` retained.
+- V1 adapter harness (`test/tui-v1.test.js`): hermetic registration, toggle,
+  setup, dialog, and startup-picker coverage.
+- Docs: per-version install tabs and differences table (README), V1 loader
+  appendix (docs/loader-notes.md), contract table (docs/v1-contract.md).
+
 ## 0.4.0 - 2026-09-17
 
 ### Added

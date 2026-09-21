@@ -26,3 +26,15 @@
 ## Verified end state (cache-swapped fork, real npm path)
 - `plugin failed: 0`; palette shows Voice: record/submit/stop; startup model picker renders.
 - Record key default is now `ctrl+space` (one-time migrate off `ctrl+r`).
+
+## V1 appendix (dual-version package, 0.5.0 track)
+- Config: `opencode plugin <spec>` writes the global config `plugin` array
+  (`Config.plugin: Array<string | [string, PluginOptions]>`); tuple second
+  element carries plugin options. Manual entry works the same.
+- Entry: `main` → `./index.js`, shape `{id?, tui}` with no `server` key
+  (`TuiPluginModule`, `@opencode-ai/plugin@1.18.31`).
+- `api.keymap.registerLayer({priority, commands, bindings})` runs directly at
+  init and returns a dispose fn — no Solid slot-render constraint (that
+  `Keymap.Provider` gotcha is V2-only).
+- Delivery is native: `client.tui.appendPrompt({text})` + `submitPrompt()`.
+- Full contract table: `docs/v1-contract.md`.
